@@ -135,6 +135,37 @@ export default function LearningPage() {
               </Link>
             </CardFooter>
           </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Student Loan management</CardTitle>
+                <Badge variant="outline">Daily</Badge>
+              </div>
+              <CardDescription>Learn all about Student Loans</CardDescription>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+
+                </div>
+                <div className="flex items-center gap-1">
+                  <CreditCard className="h-4 w-4" />
+                  <span>Intermediate</span>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="text-xs text-muted-foreground">New questions available today</div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Link href="/dashboard/learning/studentloanmanagement" className="w-full">
+                <Button variant="default" className="w-full">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Start Module
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
         </div>
       </div>
     </div>

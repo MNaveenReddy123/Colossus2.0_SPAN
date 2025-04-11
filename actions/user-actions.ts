@@ -1,20 +1,17 @@
-"use server"
+"use server";
 
-import { getSupabaseServerClient } from "@/lib/supabase"
+import { getSupabaseServerClient } from "@/lib/supabase";
 
 // Function to ensure the activities table exists
 export async function ensureActivitiesTableExists() {
-  const supabase = getSupabaseServerClient()
+  const supabase = getSupabaseServerClient();
 
   try {
-    // Check if the activities table exists by attempting a simple query
-    const { error } = await supabase.from("activities").select("id").limit(1)
+    const { error } = await supabase.from("activities").select("id").limit(1);
 
-    // If we get a specific error about the table not existing
     if (error && (error.code === "42P01" || error.message.includes("does not exist"))) {
-      console.log("Activities table does not exist, creating it now...")
+      console.log("Activities table does not exist, creating it now...");
 
-      // Create the activities table
       const createTableQuery = `
         CREATE TABLE IF NOT EXISTS activities (
           id SERIAL PRIMARY KEY,
@@ -26,99 +23,80 @@ export async function ensureActivitiesTableExists() {
           coins_earned INTEGER NOT NULL,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
-        
-        -- Create index for faster queries
         CREATE INDEX IF NOT EXISTS idx_activities_user_id ON activities(user_id);
-      `
+      `;
 
-      // Execute the query using RPC (if available) or raw SQL
       try {
-        // Try using RPC first
-        const { error: createError } = await supabase.rpc("exec", { query: createTableQuery })
-
+        const { error: createError } = await supabase.rpc("exec", { query: createTableQuery });
         if (createError) {
-          console.error("Error creating activities table via RPC:", createError)
-          // If RPC fails, we can't create the table from the client side
-          return { success: false, error: createError }
+          console.error("Error creating activities table via RPC:", createError);
+          return { success: false, error: createError };
         }
-
-        return { success: true, message: "Activities table created successfully" }
+        return { success: true, message: "Activities table created successfully" };
       } catch (rpcError) {
-        console.error("RPC execution error:", rpcError)
-        return { success: false, error: rpcError }
+        console.error("RPC execution error:", rpcError);
+        return { success: false, error: rpcError };
       }
     }
-
-    return { success: true, message: "Activities table already exists" }
+    return { success: true, message: "Activities table already exists" };
   } catch (error) {
-    console.error("Error checking/creating activities table:", error)
-    return { success: false, error }
+    console.error("Error checking/creating activities table:", error);
+    return { success: false, error };
   }
 }
 
-// Modify updateUserXpAndCoins to return the updated values
+// Update user XP and coins
 export async function updateUserXpAndCoins(userId: string, xpEarned: number, coinsEarned: number) {
-  const supabase = getSupabaseServerClient()
+  const supabase = getSupabaseServerClient();
 
   try {
-    // First get current user data
     const { data: userData, error: fetchError } = await supabase
       .from("users")
       .select("xp, coins")
       .eq("id", userId)
-      .single()
+      .single();
 
     if (fetchError) {
-      console.error("Error fetching user data:", fetchError)
-      throw fetchError
+      console.error("Error fetching user data:", fetchError);
+      throw fetchError;
     }
 
-    const newXp = userData.xp + xpEarned
-    const newCoins = userData.coins + coinsEarned
+    const newXp = userData.xp + xpEarned;
+    const newCoins = userData.coins + coinsEarned;
 
-    console.log(`Updating user ${userId}: XP ${userData.xp} -> ${newXp}, Coins ${userData.coins} -> ${newCoins}`)
+    console.log(`Updating user ${userId}: XP ${userData.xp} -> ${newXp}, Coins ${userData.coins} -> ${newCoins}`);
 
-    // Update user with new XP and coins
     const { error: updateError } = await supabase
       .from("users")
-      .update({
-        xp: newXp,
-        coins: newCoins,
-      })
-      .eq("id", userId)
+      .update({ xp: newXp, coins: newCoins })
+      .eq("id", userId);
 
     if (updateError) {
-      console.error("Error updating user XP and coins:", updateError)
-      throw updateError
+      console.error("Error updating user XP and coins:", updateError);
+      throw updateError;
     }
 
-    return {
-      success: true,
-      updatedXp: newXp,
-      updatedCoins: newCoins,
-    }
+    return { success: true, updatedXp: newXp, updatedCoins: newCoins };
   } catch (error) {
-    console.error("Error updating user XP and coins:", error)
-    return { success: false, error }
+    console.error("Error updating user XP and coins:", error);
+    return { success: false, error };
   }
 }
 
-// Modify the saveActivityProgress function to return the updated user data
+// Save activity progress
 export async function saveActivityProgress(
   userId: string,
   activityType: "quiz" | "game" | "simulation",
   activityName: string,
   score: number,
   xpEarned: number,
-  coinsEarned: number,
+  coinsEarned: number
 ) {
-  const supabase = getSupabaseServerClient()
+  const supabase = getSupabaseServerClient();
 
   try {
-    // Ensure activities table exists
-    await ensureActivitiesTableExists()
+    await ensureActivitiesTableExists();
 
-    // Save activity progress
     const { error: activityError } = await supabase.from("activities").insert({
       user_id: userId,
       activity_type: activityType,
@@ -126,44 +104,34 @@ export async function saveActivityProgress(
       score,
       xp_earned: xpEarned,
       coins_earned: coinsEarned,
-    })
+    });
 
     if (activityError) {
-      console.error("Error saving activity:", activityError)
-      throw activityError
+      console.error("Error saving activity:", activityError);
+      throw activityError;
     }
 
-    // Update user XP and coins
-    const result = await updateUserXpAndCoins(userId, xpEarned, coinsEarned)
-
+    const result = await updateUserXpAndCoins(userId, xpEarned, coinsEarned);
     if (!result.success) {
-      console.error("Failed to update user data")
-      throw new Error("Failed to update user data")
+      throw new Error("Failed to update user data");
     }
 
-    // Return the updated user data
-    return {
-      success: true,
-      updatedCoins: result.updatedCoins,
-      updatedXp: result.updatedXp,
-    }
+    return { success: true, updatedCoins: result.updatedCoins, updatedXp: result.updatedXp };
   } catch (error) {
-    console.error("Error saving activity progress:", error)
-    return { success: false, error }
+    console.error("Error saving activity progress:", error);
+    return { success: false, error };
   }
 }
 
-export async function getUserActivities(userId: string) {
-  const supabase = getSupabaseServerClient()
+// Get user activities (renamed from getUserActivities for consistency)
+export async function getUserTransactions(userId: string, limit = 20) {
+  const supabase = getSupabaseServerClient();
 
   try {
-    // Check if activities table exists first
-    const tableCheck = await ensureActivitiesTableExists()
-
-    // If we couldn't create the table, return empty activities
+    const tableCheck = await ensureActivitiesTableExists();
     if (!tableCheck.success) {
-      console.warn("Activities table doesn't exist and couldn't be created. Returning empty activities.")
-      return { success: true, data: [] }
+      console.warn("Activities table doesn't exist and couldn't be created. Returning empty activities.");
+      return { success: true, data: [] };
     }
 
     const { data, error } = await supabase
@@ -171,33 +139,188 @@ export async function getUserActivities(userId: string) {
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(10)
+      .limit(limit);
 
     if (error) {
-      // If the table doesn't exist, return empty activities
       if (error.code === "42P01" || error.message.includes("does not exist")) {
-        console.warn("Activities table doesn't exist. Returning empty activities.")
-        return { success: true, data: [] }
+        console.warn("Activities table doesn't exist. Returning empty activities.");
+        return { success: true, data: [] };
       }
-      console.error("Error fetching activities:", error)
-      throw error
+      console.error("Error fetching activities:", error);
+      throw error;
     }
 
-    return { success: true, data }
+    return { success: true, data: data || [] };
   } catch (error) {
-    console.error("Error fetching user activities:", error)
-    return { success: false, error, data: [] }
+    console.error("Error fetching user activities:", error);
+    return { success: false, error, data: [] };
+  }
+}
+export async function getUserActivities(userId: string, limit = 20) {
+  const supabase = getSupabaseServerClient();
+
+  try {
+    const tableCheck = await ensureActivitiesTableExists();
+    if (!tableCheck.success) {
+      console.warn("Activities table doesn't exist and couldn't be created. Returning empty activities.");
+      return { success: true, data: [] };
+    }
+
+    const { data, error } = await supabase
+      .from("activities")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      if (error.code === "42P01" || error.message.includes("does not exist")) {
+        console.warn("Activities table doesn't exist. Returning empty activities.");
+        return { success: true, data: [] };
+      }
+      console.error("Error fetching activities:", error);
+      throw error;
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error) {
+    console.error("Error fetching user activities:", error);
+    return { success: false, error, data: [] };
   }
 }
 
-// Updated getLeaderboardData function with better error handling and retry logic
-export async function getLeaderboardData() {
-  const supabase = getSupabaseServerClient()
-  const maxRetries = 3
-  let retries = 0
+// actions/user-actions.ts (partial update)
+export async function getUserSuggestions(userId: string) {
+  const supabase = getSupabaseServerClient();
 
-  // Helper function to add delay between retries
-  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+  try {
+    const { data, error } = await supabase
+      .from("activities")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching user activities for suggestions:", error);
+      return { success: false, error, data: [] };
+    }
+
+    const activities = data || [];
+
+    // Summarize user activity
+    const activitySummary: Record<
+      string,
+      { count: number; totalScore: number; totalXP: number; totalCoins: number; maxScore: number; lastPlayed: string }
+    > = activities.reduce((acc, curr) => {
+      const key = `${curr.activity_type}-${curr.activity_name}`;
+      if (!acc[key]) {
+        acc[key] = { count: 0, totalScore: 0, totalXP: 0, totalCoins: 0, maxScore: 0, lastPlayed: curr.created_at };
+      }
+      acc[key].count += 1;
+      acc[key].totalScore += curr.score;
+      acc[key].totalXP += curr.xp_earned;
+      acc[key].totalCoins += curr.coins_earned;
+      acc[key].maxScore = Math.max(acc[key].maxScore, curr.score);
+      acc[key].lastPlayed =
+        new Date(curr.created_at) > new Date(acc[key].lastPlayed) ? curr.created_at : acc[key].lastPlayed;
+      return acc;
+    }, {});
+
+    // Define available activities
+    const availableActivities = [
+      { type: "quiz", name: "Budgeting Basics", path: "/dashboard/quizzes/budgeting" },
+      { type: "quiz", name: "Credit Score", path: "/dashboard/quizzes/credit-score" },
+      { type: "quiz", name: "Investment", path: "/dashboard/quizzes/investment" },
+      { type: "game", name: "Bank Vault Dash", path: "/dashboard/games/bank-vault-dash" },
+      { type: "game", name: "Tax Rush", path: "/dashboard/games/tax-rush" },
+      { type: "game", name: "Credit Score Adventure", path: "/dashboard/games/credit-score" },
+      { type: "game", name: "Stock Market", path: "/dashboard/games/stock-market" },
+      { type: "simulation", name: "Budgeting", path: "/dashboard/simulations/budgeting" },
+    ];
+
+    const playedActivities = Object.keys(activitySummary);
+    const suggestions = [];
+
+    // Default suggestions for new users (no activities)
+    if (activities.length === 0) {
+      const defaultSuggestions = [
+        { type: "quiz", name: "Budgeting Basics", path: "/dashboard/quizzes/budgeting" },
+        { type: "game", name: "Tax Rush", path: "/dashboard/games/tax-rush" },
+        { type: "simulation", name: "Budgeting", path: "/dashboard/simulations/budgeting" },
+      ];
+      defaultSuggestions.forEach((s) => {
+        suggestions.push({
+          title: `Try ${s.name}`,
+          description: `Kickstart your journey with this ${s.type}!`,
+          type: s.type,
+          name: s.name,
+          path: s.path,
+          action: "Start Now",
+        });
+      });
+    } else {
+      // Existing suggestion logic for users with activities
+      for (const [key, stats] of Object.entries(activitySummary)) {
+        const [type, name] = key.split("-");
+        const avgScore = stats.totalScore / stats.count;
+        if (avgScore < 20 && stats.count >= 2) {
+          const path = availableActivities.find((a) => a.type === type && a.name === name)?.path || "";
+          suggestions.push({
+            title: `Boost Your ${name} Skills`,
+            description: `Your average score (${Math.round(avgScore)}) in ${name} is low. Try it again to improve!`,
+            type,
+            name,
+            path,
+            action: "Play Again",
+          });
+        }
+      }
+
+      const unplayed = availableActivities.filter((act) => !playedActivities.includes(`${act.type}-${act.name}`));
+      if (unplayed.length > 0) {
+        const randomUnplayed = unplayed[Math.floor(Math.random() * unplayed.length)];
+        suggestions.push({
+          title: `Try ${randomUnplayed.name}`,
+          description: `Explore a new ${randomUnplayed.type} to expand your financial skills!`,
+          type: randomUnplayed.type,
+          name: randomUnplayed.name,
+          path: randomUnplayed.path,
+          action: "Start Now",
+        });
+      }
+
+      const highScoreActivity = Object.entries(activitySummary)
+        .filter(([_, stats]) => stats.count > 1)
+        .sort(([, a], [, b]) => b.maxScore - a.maxScore)[0];
+      if (highScoreActivity) {
+        const [key] = highScoreActivity;
+        const stats = highScoreActivity[1];
+        const [type, name] = key.split("-");
+        const path = availableActivities.find((a) => a.type === type && a.name === name)?.path || "";
+        suggestions.push({
+          title: `Beat Your ${name} Record`,
+          description: `Your high score is ${stats.maxScore}. Can you top it?`,
+          type,
+          name,
+          path,
+          action: "Challenge Yourself",
+        });
+      }
+    }
+
+    return { success: true, data: suggestions.slice(0, 3) };
+  } catch (error) {
+    console.error("Error generating user suggestions:", error);
+    return { success: false, error, data: [] };
+  }
+}
+// Get leaderboard data with retry logic
+export async function getLeaderboardData() {
+  const supabase = getSupabaseServerClient();
+  const maxRetries = 3;
+  let retries = 0;
+
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   while (retries < maxRetries) {
     try {
@@ -205,86 +328,37 @@ export async function getLeaderboardData() {
         .from("users")
         .select("id, name, avatar, level, xp, coins")
         .order("xp", { ascending: false })
-        .limit(50)
+        .limit(50);
 
-      // Check for rate limiting or other errors
       if (error) {
         if (status === 429) {
-          // Too Many Requests
-          console.warn(`Rate limited (429). Retry ${retries + 1}/${maxRetries} after delay...`)
-          await delay(Math.pow(2, retries) * 1000) // Exponential backoff
-          retries++
-          continue
+          console.warn(`Rate limited (429). Retry ${retries + 1}/${maxRetries} after delay...`);
+          await delay(Math.pow(2, retries) * 1000);
+          retries++;
+          continue;
         }
-
-        console.error("Error fetching leaderboard data:", error)
-        return {
-          success: false,
-          error,
-          data: [],
-        }
+        console.error("Error fetching leaderboard data:", error);
+        return { success: false, error, data: [] };
       }
 
-      // If we got here, the request was successful
-      return {
-        success: true,
-        data: data || [],
-      }
+      return { success: true, data: data || [] };
     } catch (error: any) {
-      // Handle non-Supabase errors (like network issues)
-      console.error("Exception fetching leaderboard data:", error)
-
-      // If it's a rate limit error or network error, retry
+      console.error("Exception fetching leaderboard data:", error);
       if (
         error.message?.includes("Too Many Requests") ||
         error.message?.includes("network") ||
         error.message?.includes("timeout")
       ) {
         if (retries < maxRetries - 1) {
-          console.warn(`Error occurred. Retry ${retries + 1}/${maxRetries} after delay...`)
-          await delay(Math.pow(2, retries) * 1000)
-          retries++
-          continue
+          console.warn(`Error occurred. Retry ${retries + 1}/${maxRetries} after delay...`);
+          await delay(Math.pow(2, retries) * 1000);
+          retries++;
+          continue;
         }
       }
-
-      // Return error after all retries or for non-retryable errors
-      return {
-        success: false,
-        error,
-        data: [],
-      }
+      return { success: false, error, data: [] };
     }
   }
 
-  // If we've exhausted all retries
-  return {
-    success: false,
-    error: new Error("Maximum retry attempts reached"),
-    data: [],
-  }
-}
-
-// Add a function to get recent transactions for a user
-export async function getUserTransactions(userId: string, limit = 10) {
-  const supabase = getSupabaseServerClient()
-
-  try {
-    const { data, error } = await supabase
-      .from("activities")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(limit)
-
-    if (error) {
-      console.error("Error fetching user transactions:", error)
-      throw error
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    console.error("Error fetching user transactions:", error)
-    return { success: false, error, data: [] }
-  }
+  return { success: false, error: new Error("Maximum retry attempts reached"), data: [] };
 }

@@ -146,6 +146,38 @@ export default function QuizzesPage() {
               </Link>
             </CardFooter>
           </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Student Loan</CardTitle>
+                <Badge variant="outline">Beginner</Badge>
+              </div>
+              <CardDescription>Test your understanding about Student Loans</CardDescription>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>5 min</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Landmark className="h-4 w-4" />
+                  <span>Beginner</span>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="text-xs text-muted-foreground">Earn up to 20 coins for completion</div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Link href="/dashboard/quizzes/student-loans" className="w-full">
+                <Button variant="default" className="w-full">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Take Quiz
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
         </div>
       </div>
     </div>
