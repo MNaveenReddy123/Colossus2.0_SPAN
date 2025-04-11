@@ -18,24 +18,32 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserActivities } from "@/actions/user-actions"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function GamesPage() {
   const { userData } = useAuth()
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(null)
+  const hasLoadedRef = useRef(false)
+  const userIdRef = useRef(null)
 
   useEffect(() => {
     const fetchActivities = async () => {
-      if (userData) {
+      // Only fetch if we have userData with id and either:
+      // 1. We haven't loaded data yet, or
+      // 2. The user ID has changed
+      if (userData?.id && (!hasLoadedRef.current || userIdRef.current !== userData.id)) {
+        userIdRef.current = userData.id
         setLoading(true)
         setError(null)
+        
         try {
           const result = await getUserActivities(userData.id)
           if (result.success) {
             setActivities(result.data || [])
+            hasLoadedRef.current = true
           } else {
             console.error("Error fetching activities:", result.error)
             setError("Could not load activity data. Using default values.")
@@ -206,7 +214,6 @@ export default function GamesPage() {
           </Card>
        
     <Card>
-
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Bank Vault Dash</CardTitle>

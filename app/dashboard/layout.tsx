@@ -67,15 +67,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return
 
-    // Initial refresh
+    // Initial refresh only
     refreshUserData()
 
-    // Set up periodic refresh
-    const refreshInterval = setInterval(() => {
-      refreshUserData()
-    }, 15000) // Refresh every 15 seconds for more responsive UI
-
-    return () => clearInterval(refreshInterval)
+    // Only refresh if needed (e.g., after important actions)
+    // Removed automatic refresh interval to prevent unnecessary requests
   }, [user, refreshUserData])
 
   if (loading) {
@@ -256,6 +252,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 async function fetchUserData(uid: string) {
   // Use the actual Supabase client to fetch user data
   const supabase = getSupabaseBrowserClient()
+  if (!supabase) {
+    console.error("Supabase client not initialized")
+    return null
+  }
+  
   try {
     const { data, error } = await supabase.from("users").select("*").eq("id", uid).single()
 

@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Trophy, Medal, Search, Users, User, Loader2, AlertCircle, RefreshCw } from "lucide-react"
+import { Trophy, Medal, Search, Users, User, Loader2, AlertCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { getLeaderboardData } from "@/actions/user-actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -20,88 +20,62 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [userRank, setUserRank] = useState(null)
-  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // Use refs to prevent unnecessary fetches
-  const isMounted = useRef(true)
-  const lastFetchTime = useRef(0)
-  const fetchTimeoutRef = useRef(null)
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      if (!userData) return
 
-  // Function to fetch leaderboard data with debounce
-  const fetchLeaderboard = async (force = false) => {
-    // Don't fetch if not mounted
-    if (!isMounted.current) return
+      setLoading(true)
+      try {
+        const result = await getLeaderboardData()
+        if (result.success) {
+          setLeaderboardData(result.data)
+          setFilteredData(result.data)
 
-    // Don't fetch if no user data
-    if (!userData) return
-
-    // Implement a cooldown period (30 seconds) unless forced refresh
-    const now = Date.now()
-    if (!force && now - lastFetchTime.current < 30000) {
-      return
-    }
-
-    // Clear any pending fetch timeout
-    if (fetchTimeoutRef.current) {
-      clearTimeout(fetchTimeoutRef.current)
-    }
-
-    setLoading(true)
-    if (force) {
-      setIsRefreshing(true)
-    }
-
-    try {
-      const result = await getLeaderboardData()
-
-      // Check if component is still mounted before updating state
-      if (!isMounted.current) return
-
-      if (result.success) {
-        setLeaderboardData(result.data)
-        setFilteredData(result.data)
-        setError(null)
-
-        // Find user's rank
-        if (userData && result.data) {
+          // Find user's rank
           const rank = result.data.findIndex((user) => user.id === userData.id) + 1
           setUserRank(rank > 0 ? rank : null)
+        } else {
+          setError("Failed to load leaderboard data")
         }
-
-        // Update last fetch time
-        lastFetchTime.current = Date.now()
-      } else {
-        setError("Failed to load leaderboard data. Please try again later.")
+      } catch (err) {
+        console.error("Error fetching leaderboard:", err)
+        setError("An unexpected error occurred")
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      // Check if component is still mounted before updating state
-      if (!isMounted.current) return
-
-      console.error("Error fetching leaderboard:", err)
-      setError("An unexpected error occurred. Please try again later.")
-    } finally {
-      // Check if component is still mounted before updating state
-      if (!isMounted.current) return
-
-      setLoading(false)
-      setIsRefreshing(false)
     }
-  }
 
-  // Initial fetch on mount
-  useEffect(() => {
     fetchLeaderboard()
-
-    // Cleanup function
-    return () => {
-      isMounted.current = false
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current)
-      }
-    }
   }, [userData])
 
-  // Filter data when search query changes
+  useEffect(() => {
+    // Set up a refresh interval for the leaderboard
+    const interval = setInterval(() => {
+      if (userData) {
+        const fetchLeaderboard = async () => {
+          try {
+            const result = await getLeaderboardData()
+            if (result.success) {
+              setLeaderboardData(result.data)
+              setFilteredData(result.data)
+
+              // Find user's rank
+              const rank = result.data.findIndex((user) => user.id === userData.id) + 1
+              setUserRank(rank > 0 ? rank : null)
+            }
+          } catch (err) {
+            console.error("Error refreshing leaderboard:", err)
+          }
+        }
+
+        fetchLeaderboard()
+      }
+    }, 10000) // Refresh every 10 seconds
+
+    return () => clearInterval(interval)
+  }, [userData])
+
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredData(leaderboardData)
@@ -110,11 +84,6 @@ export default function LeaderboardPage() {
       setFilteredData(filtered)
     }
   }, [searchQuery, leaderboardData])
-
-  // Handle manual refresh
-  const handleRefresh = () => {
-    fetchLeaderboard(true)
-  }
 
   if (!userData) {
     return (
@@ -133,14 +102,6 @@ export default function LeaderboardPage() {
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-3xl font-bold tracking-tight">Leaderboard</h2>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
-              {isRefreshing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              <span>Refresh</span>
-            </Button>
             <Button variant="outline">
               <Users className="mr-2 h-4 w-4" />
               <span>Find Friends</span>
@@ -182,7 +143,7 @@ export default function LeaderboardPage() {
                 <CardDescription>Users with the highest XP and achievements</CardDescription>
               </CardHeader>
               <CardContent className="space-y-8">
-                {loading && !isRefreshing ? (
+                {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <span className="ml-2">Loading leaderboard...</span>
@@ -257,70 +218,54 @@ export default function LeaderboardPage() {
                       </div>
                     )}
 
-                    {filteredData.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center rounded-md bg-muted/50 px-4 py-2 font-medium">
-                          <div className="w-10 text-center">Rank</div>
-                          <div className="ml-4 flex-1">User</div>
-                          <div className="w-20 text-center">Level</div>
-                          <div className="w-20 text-center">XP</div>
-                          <div className="w-20 text-center">Coins</div>
+                    <div className="space-y-2">
+                      <div className="flex items-center rounded-md bg-muted/50 px-4 py-2 font-medium">
+                        <div className="w-10 text-center">Rank</div>
+                        <div className="ml-4 flex-1">User</div>
+                        <div className="w-20 text-center">Level</div>
+                        <div className="w-20 text-center">XP</div>
+                        <div className="w-20 text-center">Coins</div>
+                      </div>
+
+                      {filteredData.slice(3, 10).map((user, index) => (
+                        <div key={user.id} className="flex items-center rounded-md px-4 py-2 hover:bg-muted">
+                          <div className="w-10 text-center font-medium">{index + 4}</div>
+                          <div className="ml-4 flex flex-1 items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={`/placeholder.svg?height=32&width=32`} alt={user.name} />
+                              <AvatarFallback>
+                                <User className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{user.name}</span>
+                          </div>
+                          <div className="w-20 text-center">{Math.floor(user.xp / 100) + 1}</div>
+                          <div className="w-20 text-center">{user.xp}</div>
+                          <div className="w-20 text-center">{user.coins}</div>
                         </div>
+                      ))}
 
-                        {filteredData.slice(3, 10).map((user, index) => (
-                          <div key={user.id} className="flex items-center rounded-md px-4 py-2 hover:bg-muted">
-                            <div className="w-10 text-center font-medium">{index + 4}</div>
-                            <div className="ml-4 flex flex-1 items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={`/placeholder.svg?height=32&width=32`} alt={user.name} />
-                                <AvatarFallback>
-                                  <User className="h-4 w-4" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>{user.name}</span>
-                            </div>
-                            <div className="w-20 text-center">{Math.floor(user.xp / 100) + 1}</div>
-                            <div className="w-20 text-center">{user.xp}</div>
-                            <div className="w-20 text-center">{user.coins}</div>
+                      {userRank && userRank > 10 && (
+                        <div className="mt-4 flex items-center rounded-md bg-primary/5 px-4 py-2">
+                          <div className="w-10 text-center font-medium">{userRank}</div>
+                          <div className="ml-4 flex flex-1 items-center gap-2">
+                            <Avatar className="h-8 w-8 border border-primary/20">
+                              <AvatarImage src="/placeholder.svg?height=32&width=32" alt={userData.name} />
+                              <AvatarFallback>
+                                <User className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{userData.name}</span>
+                            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary">
+                              You
+                            </Badge>
                           </div>
-                        ))}
-
-                        {userRank && userRank > 10 && (
-                          <div className="mt-4 flex items-center rounded-md bg-primary/5 px-4 py-2">
-                            <div className="w-10 text-center font-medium">{userRank}</div>
-                            <div className="ml-4 flex flex-1 items-center gap-2">
-                              <Avatar className="h-8 w-8 border border-primary/20">
-                                <AvatarImage src="/placeholder.svg?height=32&width=32" alt={userData.name} />
-                                <AvatarFallback>
-                                  <User className="h-4 w-4" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium">{userData.name}</span>
-                              <Badge variant="outline" className="ml-2 bg-primary/10 text-primary">
-                                You
-                              </Badge>
-                            </div>
-                            <div className="w-20 text-center">{Math.floor(userData.xp / 100) + 1}</div>
-                            <div className="w-20 text-center">{userData.xp}</div>
-                            <div className="w-20 text-center">{userData.coins}</div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {filteredData.length === 0 && !loading && !error && (
-                      <div className="flex flex-col items-center justify-center py-8">
-                        <Trophy className="h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-medium">No leaderboard data available</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          Complete activities to start earning XP and appear on the leaderboard
-                        </p>
-                        <Button className="mt-4" onClick={handleRefresh}>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Refresh Leaderboard
-                        </Button>
-                      </div>
-                    )}
+                          <div className="w-20 text-center">{Math.floor(userData.xp / 100) + 1}</div>
+                          <div className="w-20 text-center">{userData.xp}</div>
+                          <div className="w-20 text-center">{userData.coins}</div>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
               </CardContent>

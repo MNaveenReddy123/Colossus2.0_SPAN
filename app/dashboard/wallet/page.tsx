@@ -4,63 +4,62 @@ import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowDown, ArrowUp, Wallet, TrendingUp, Clock, CreditCard, Loader2, AlertCircle } from "lucide-react"
+import { ArrowDown, ArrowUp, Wallet, TrendingUp, Clock, CreditCard, Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserTransactions } from "@/actions/user-actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function WalletPage() {
-  const { userData, refreshUserData } = useAuth()
+  const { userData } = useAuth()
   const [transactions, setTransactions] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const isMounted = useRef(true)
   const hasLoadedData = useRef(false)
 
+  // Cleanup on unmount
   useEffect(() => {
-    // Set up cleanup function
     return () => {
       isMounted.current = false
     }
   }, [])
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      // Only fetch if we haven't loaded data yet or if userData changes
-      if (!userData || hasLoadedData.current) return
+  // Fetch transactions
+  const fetchTransactions = async (forceRefresh = false) => {
+    if (!userData || (hasLoadedData.current && !forceRefresh)) return
 
-      setLoading(true)
-      try {
-        const result = await getUserTransactions(userData.id, 20)
-        if (result.success && isMounted.current) {
-          setTransactions(result.data)
-          hasLoadedData.current = true
-        } else if (isMounted.current) {
-          setError("Failed to load transaction history")
-        }
-      } catch (err) {
-        console.error("Error fetching transactions:", err)
-        if (isMounted.current) {
-          setError("An unexpected error occurred")
-        }
-      } finally {
-        if (isMounted.current) {
-          setLoading(false)
-        }
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await getUserTransactions(userData.id, 20)
+      if (result.success && isMounted.current) {
+        setTransactions(result.data)
+        hasLoadedData.current = true
+      } else if (isMounted.current) {
+        setError("Failed to load transaction history")
+      }
+    } catch (err) {
+      console.error("Error fetching transactions:", err)
+      if (isMounted.current) {
+        setError("An unexpected error occurred")
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchTransactions()
-  }, [userData])
-
-  // Refresh user data only once when component mounts
+  // Initial fetch or when userData.id changes
   useEffect(() => {
-    if (userData) {
-      refreshUserData().catch((err) => {
-        console.error("Error refreshing user data:", err)
-      })
-    }
-  }, [userData, refreshUserData])
+    fetchTransactions()
+  }, [userData?.id]) // Depend on userData.id to avoid refetching on object reference changes
+
+  // Handle manual refresh
+  const handleRefresh = () => {
+    hasLoadedData.current = false // Allow refetch
+    fetchTransactions(true)
+  }
 
   if (!userData) {
     return (
@@ -75,7 +74,6 @@ export default function WalletPage() {
 
   // Calculate total earned and spent
   const totalEarned = transactions.reduce((sum, tx) => (tx.coins_earned > 0 ? sum + tx.coins_earned : sum), 0)
-
   const totalSpent = userData.coins > 0 ? totalEarned - userData.coins : 0
 
   return (
@@ -84,6 +82,10 @@ export default function WalletPage() {
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-3xl font-bold tracking-tight">Virtual Wallet</h2>
           <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
             <Button>
               <Wallet className="mr-2 h-4 w-4" />
               <span>{userData.coins} Coins</span>

@@ -25,7 +25,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function DashboardPage() {
   const { userData, refreshUserData } = useAuth()
-  const [activities, setActivities] = useState([])
+  interface Activity {
+    id: string
+    activity_type: 'quiz' | 'game' | 'simulation'
+    activity_name: string
+    score: number
+    xp_earned: number
+    coins_earned: number
+    created_at: string
+  }
+
+  const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
@@ -53,15 +63,7 @@ export default function DashboardPage() {
     }
 
     fetchActivities()
-
-    // Try to refresh user data if needed
-    if (userData && retryCount < 3) {
-      refreshUserData().catch((err) => {
-        console.error("Error refreshing user data:", err)
-        setRetryCount((prev) => prev + 1)
-      })
-    }
-  }, [userData, refreshUserData, retryCount])
+  }, [userData])
 
   if (!userData) {
     return (
