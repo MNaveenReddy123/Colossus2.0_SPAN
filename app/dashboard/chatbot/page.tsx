@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useRef, useEffect } from 'react'
 import { HfInference } from '@huggingface/inference'
 import { Button } from "@/components/ui/button"
