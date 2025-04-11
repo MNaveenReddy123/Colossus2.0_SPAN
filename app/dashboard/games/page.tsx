@@ -277,7 +277,7 @@ export default function GamesPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Link href="/dashboard/games/stock-market" className="w-full">
+                <Link href="/dashboard/games/stockmarket/app" className="w-full">
                   <Button variant="default" className="w-full">
                     <Gamepad2 className="mr-2 h-4 w-4" />
                     Play
