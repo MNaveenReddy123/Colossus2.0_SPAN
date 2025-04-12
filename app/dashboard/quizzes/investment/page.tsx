@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,10 +21,9 @@ import {
   Award,
   AlertTriangle,
 } from "lucide-react";
-
-
-
-
+import { useAuth } from "@/contexts/auth-context";
+import { saveActivityProgress } from "@/actions/user-actions";
+import { toast } from "@/components/ui/use-toast";
 
 // Quiz questions
 const questions = [
@@ -256,7 +255,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "Gold is often seen as a hedge against currency devaluation because its value isn’t tied to a single currency.",
+      "Gold is often seen as a hedge against currency devaluation because its value isn't tied to a single currency.",
   },
   {
     id: 17,
@@ -388,12 +387,12 @@ const questions = [
     id: 26,
     question: "What is the primary purpose of a stock split?",
     options: [
-      { id: "a", text: "To increase the company’s profits" },
+      { id: "a", text: "To increase the company's profits" },
       {
         id: "b",
         text: "To make shares more affordable by increasing the number of shares",
       },
-      { id: "c", text: "To reduce the company’s debt" },
+      { id: "c", text: "To reduce the company's debt" },
       { id: "d", text: "To pay dividends" },
     ],
     correctAnswer: "b",
@@ -414,7 +413,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "The expense ratio is the yearly cost of managing the fund, deducted from the fund’s assets.",
+      "The expense ratio is the yearly cost of managing the fund, deducted from the fund's assets.",
   },
   {
     id: 28,
@@ -469,7 +468,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "Short selling is a strategy to profit from a stock’s price decline by selling borrowed shares and repurchasing them later.",
+      "Short selling is a strategy to profit from a stock's price decline by selling borrowed shares and repurchasing them later.",
   },
   {
     id: 32,
@@ -514,7 +513,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "Rebalancing restores a portfolio’s target mix by buying or selling assets as their values shift.",
+      "Rebalancing restores a portfolio's target mix by buying or selling assets as their values shift.",
   },
   {
     id: 35,
@@ -553,7 +552,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "The P/E ratio compares a stock’s price to its earnings per share, indicating its valuation.",
+      "The P/E ratio compares a stock's price to its earnings per share, indicating its valuation.",
   },
   {
     id: 38,
@@ -585,14 +584,14 @@ const questions = [
     id: 40,
     question: "What does 'market capitalization' measure?",
     options: [
-      { id: "a", text: "A company’s total debt" },
-      { id: "b", text: "The total value of a company’s outstanding shares" },
-      { id: "c", text: "The company’s annual profit" },
+      { id: "a", text: "A company's total debt" },
+      { id: "b", text: "The total value of a company's outstanding shares" },
+      { id: "c", text: "The company's annual profit" },
       { id: "d", text: "The tax rate" },
     ],
     correctAnswer: "b",
     explanation:
-      "Market cap is calculated by multiplying a company’s share price by its number of shares, reflecting its size.",
+      "Market cap is calculated by multiplying a company's share price by its number of shares, reflecting its size.",
   },
   {
     id: 41,
@@ -692,7 +691,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "Beta indicates how much a stock’s price moves relative to the market, with 1 being equal to the market.",
+      "Beta indicates how much a stock's price moves relative to the market, with 1 being equal to the market.",
   },
   {
     id: 48,
@@ -744,14 +743,14 @@ const questions = [
       { id: "a", text: "To guarantee returns" },
       {
         id: "b",
-        text: "To provide detailed information about the fund’s objectives and risks",
+        text: "To provide detailed information about the fund's objectives and risks",
       },
       { id: "c", text: "To advertise tax benefits" },
       { id: "d", text: "To list all investors" },
     ],
     correctAnswer: "b",
     explanation:
-      "A prospectus outlines a fund’s goals, strategies, fees, and risks to inform potential investors.",
+      "A prospectus outlines a fund's goals, strategies, fees, and risks to inform potential investors.",
   },
   {
     id: 52,
@@ -862,7 +861,7 @@ const questions = [
     options: [
       {
         id: "a",
-        text: "To track investments you’re considering or monitoring",
+        text: "To track investments you're considering or monitoring",
       },
       { id: "b", text: "To guarantee purchases" },
       { id: "c", text: "To pay dividends" },
@@ -889,7 +888,7 @@ const questions = [
     id: 61,
     question: "What does 'technical analysis' focus on in investing?",
     options: [
-      { id: "a", text: "A company’s financial statements" },
+      { id: "a", text: "A company's financial statements" },
       { id: "b", text: "Price patterns and market trends" },
       { id: "c", text: "Government policies" },
       { id: "d", text: "Tax implications" },
@@ -909,20 +908,20 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "No-load funds don’t charge a commission, reducing costs for investors compared to load funds.",
+      "No-load funds don't charge a commission, reducing costs for investors compared to load funds.",
   },
   {
     id: 63,
     question: "What does 'fundamental analysis' evaluate?",
     options: [
       { id: "a", text: "Market rumors" },
-      { id: "b", text: "A company’s financial health and performance" },
+      { id: "b", text: "A company's financial health and performance" },
       { id: "c", text: "Short-term price changes" },
       { id: "d", text: "Weather patterns" },
     ],
     correctAnswer: "b",
     explanation:
-      "Fundamental analysis assesses a company’s earnings, assets, and management to determine its value.",
+      "Fundamental analysis assesses a company's earnings, assets, and management to determine its value.",
   },
   {
     id: 64,
@@ -931,7 +930,7 @@ const questions = [
       { id: "a", text: "A fixed sell price" },
       {
         id: "b",
-        text: "A sell order that adjusts with the stock’s price rise",
+        text: "A sell order that adjusts with the stock's price rise",
       },
       { id: "c", text: "A buy order for a declining stock" },
       { id: "d", text: "A diversification strategy" },
@@ -993,7 +992,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "Book value is a company’s net worth, calculated as total assets minus total liabilities.",
+      "Book value is a company's net worth, calculated as total assets minus total liabilities.",
   },
   {
     id: 69,
@@ -1048,7 +1047,7 @@ const questions = [
     ],
     correctAnswer: "a",
     explanation:
-      "Earnings Per Share (EPS) measures a company’s profit divided by its outstanding shares.",
+      "Earnings Per Share (EPS) measures a company's profit divided by its outstanding shares.",
   },
   {
     id: 73,
@@ -1077,7 +1076,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "A DRIP reinvests dividends into additional shares, compounding an investor’s holdings over time.",
+      "A DRIP reinvests dividends into additional shares, compounding an investor's holdings over time.",
   },
   {
     id: 75,
@@ -1099,9 +1098,9 @@ const questions = [
     id: 76,
     question: "What is the main purpose of a stock ticker symbol?",
     options: [
-      { id: "a", text: "To indicate the company’s profit" },
+      { id: "a", text: "To indicate the company's profit" },
       { id: "b", text: "To uniquely identify a stock on an exchange" },
-      { id: "c", text: "To set the stock’s price" },
+      { id: "c", text: "To set the stock's price" },
       { id: "d", text: "To track taxes" },
     ],
     correctAnswer: "b",
@@ -1167,7 +1166,7 @@ const questions = [
       { id: "a", text: "The date a stock doubles in value" },
       {
         id: "b",
-        text: "The date after which new buyers won’t receive the next dividend",
+        text: "The date after which new buyers won't receive the next dividend",
       },
       { id: "c", text: "The date a stock is sold" },
       { id: "d", text: "The date taxes are due" },
@@ -1203,7 +1202,7 @@ const questions = [
     ],
     correctAnswer: "a",
     explanation:
-      "Return on Equity measures a company’s profitability relative to shareholders’ equity.",
+      "Return on Equity measures a company's profitability relative to shareholders' equity.",
   },
   {
     id: 84,
@@ -1447,6 +1446,7 @@ const questions = [
 ];
 
 export default function investmentquiz() {
+  const { userData, refreshUserData } = useAuth();
   const [quizState, setQuizState] = useState("start"); // start, playing, result
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -1454,6 +1454,7 @@ export default function investmentquiz() {
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [timerActive, setTimerActive] = useState(false);
   const [randomQuestions, setRandomQuestions] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleStart = () => {
     const randomQuestions = getRandomQuestions(questions, 10);
@@ -1484,6 +1485,7 @@ export default function investmentquiz() {
       } else {
         setQuizState("result");
         setTimerActive(false);
+        handleQuizEnd();
       }
     }, 2000);
   };
@@ -1508,7 +1510,7 @@ export default function investmentquiz() {
   };
 
   // Effect for timer
-  useState(() => {
+  useEffect(() => {
     let interval;
     if (timerActive && timeLeft > 0) {
       interval = setInterval(() => {
@@ -1534,6 +1536,47 @@ export default function investmentquiz() {
     }
 
     return randomQuestions;
+  };
+
+  // Handle Quiz End
+  const handleQuizEnd = async () => {
+    if (!userData || isSubmitting) return;
+
+    const score = calculateScore();
+    const xpEarned = Math.round((score / randomQuestions.length) * 30);
+    const coinsEarned = Math.round((score / randomQuestions.length) * 20);
+
+    try {
+      setIsSubmitting(true);
+      const result = await saveActivityProgress(
+        userData.id,
+        "quiz",
+        "Investment Basics",
+        score,
+        xpEarned,
+        coinsEarned
+      );
+
+      if (result.success) {
+        await refreshUserData();
+        toast({
+          title: "Quiz Complete!",
+          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+        });
+      } else {
+        throw new Error("Failed to save progress");
+      }
+    } catch (error) {
+      console.error("Error saving quiz progress:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -1668,13 +1711,12 @@ export default function investmentquiz() {
                   return (
                     <button
                       key={option.id}
-                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
-                        isSelected
-                          ? isCorrect
-                            ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                            : "border-red-500 bg-red-50 dark:bg-red-900/20"
-                          : ""
-                      }`}
+                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${isSelected
+                        ? isCorrect
+                          ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                          : "border-red-500 bg-red-50 dark:bg-red-900/20"
+                        : ""
+                        }`}
                       onClick={() =>
                         handleAnswerSelect(
                           randomQuestions[currentQuestion].id,
@@ -1702,16 +1744,15 @@ export default function investmentquiz() {
 
               {showExplanation && (
                 <div
-                  className={`rounded-md p-3 ${
-                    selectedAnswers[randomQuestions[currentQuestion].id] ===
+                  className={`rounded-md p-3 ${selectedAnswers[randomQuestions[currentQuestion].id] ===
                     randomQuestions[currentQuestion].correctAnswer
-                      ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                  }`}
+                    ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                    }`}
                 >
                   <div className="flex items-start gap-2">
                     {selectedAnswers[randomQuestions[currentQuestion].id] ===
-                    randomQuestions[currentQuestion].correctAnswer ? (
+                      randomQuestions[currentQuestion].correctAnswer ? (
                       <CheckCircle className="h-5 w-5 shrink-0" />
                     ) : (
                       <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -1719,7 +1760,7 @@ export default function investmentquiz() {
                     <div>
                       <p className="text-sm font-medium">
                         {selectedAnswers[randomQuestions[currentQuestion].id] ===
-                        randomQuestions[currentQuestion].correctAnswer
+                          randomQuestions[currentQuestion].correctAnswer
                           ? "Correct!"
                           : "Incorrect"}
                       </p>
@@ -1755,8 +1796,8 @@ export default function investmentquiz() {
                     {calculateScore() >= 8
                       ? "Excellent! You have a strong understanding of budgeting principles."
                       : calculateScore() >= 6
-                      ? "Good job! You understand the basics of budgeting."
-                      : "You're on your way to understanding budgeting principles."}
+                        ? "Good job! You understand the basics of budgeting."
+                        : "You're on your way to understanding budgeting principles."}
                   </p>
                   <p className="mt-2 text-muted-foreground">
                     You've earned{" "}
@@ -1780,11 +1821,10 @@ export default function investmentquiz() {
                         className="flex items-center gap-2"
                       >
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                            isCorrect
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                          className={`flex h-6 w-6 items-center justify-center rounded-full ${isCorrect
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {isCorrect ? (
                             <CheckCircle className="h-4 w-4" />

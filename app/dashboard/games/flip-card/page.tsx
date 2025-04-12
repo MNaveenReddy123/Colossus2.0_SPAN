@@ -5,6 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { IndianRupee } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { saveActivityProgress } from "@/actions/user-actions";
+import { toast } from "@/components/ui/use-toast";
 
 const terms = [
   {
@@ -188,7 +191,7 @@ const terms = [
   },
   {
     term: "Market Cap",
-    definition: "Total value of a company’s outstanding shares.",
+    definition: "Total value of a company's outstanding shares.",
   },
   {
     term: "P/E Ratio",
@@ -335,6 +338,9 @@ const MemoryGamePage = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const { userData, refreshUserData } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSavedProgress, setHasSavedProgress] = useState(false);
 
   const startGame = () => {
     const selected = shuffleArray(terms).slice(0, 6);
@@ -352,6 +358,7 @@ const MemoryGamePage = () => {
     setFlippedIndices([]);
     setElapsedTime(0);
     setGameStarted(true);
+    setHasSavedProgress(false);
   };
 
   useEffect(() => {
@@ -406,10 +413,63 @@ const MemoryGamePage = () => {
   };
 
   useEffect(() => {
-    if (matchedPairs.length === cards.length / 2 && cards.length > 0) {
+    if (matchedPairs.length === cards.length / 2 && cards.length > 0 && !gameOver) {
       setGameOver(true);
+      if (!hasSavedProgress) {
+        handleGameEnd();
+      }
     }
-  }, [matchedPairs, cards]);
+  }, [matchedPairs, cards, gameOver, hasSavedProgress]);
+
+  const handleGameEnd = async () => {
+    if (!userData || isSubmitting || hasSavedProgress) return;
+
+    const XP = Math.max(100 - ((moves - 12) * 5 + elapsedTime / 2), 10);
+    const coinsEarned = Math.floor(XP * 1.5);
+
+    try {
+      setIsSubmitting(true);
+      console.log("Saving game progress...", {
+        userId: userData.id,
+        activityType: "game",
+        activityName: "Finance Memory Match",
+        score: matchedPairs.length,
+        xpEarned: XP,
+        coinsEarned: coinsEarned
+      });
+
+      const result = await saveActivityProgress(
+        userData.id,
+        "game",
+        "Finance Memory Match",
+        matchedPairs.length,
+        XP,
+        coinsEarned
+      );
+
+      if (result.success) {
+        console.log("Progress saved successfully");
+        await refreshUserData();
+        setHasSavedProgress(true);
+        toast({
+          title: "Game Complete!",
+          description: `You earned ${XP} XP and ${coinsEarned} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+        });
+      } else {
+        throw new Error("Failed to save progress");
+      }
+    } catch (error) {
+      console.error("Error saving game progress:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (!gameStarted) {
     return (
@@ -434,6 +494,7 @@ const MemoryGamePage = () => {
 
   if (gameOver) {
     const XP = Math.max(100 - ((moves - 12) * 5 + elapsedTime / 2), 10);
+    const coins_earned = Math.floor(XP * 1.5);
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-100 to-pink-200">
@@ -446,6 +507,7 @@ const MemoryGamePage = () => {
           </p>
           <p className="text-2xl mb-6 text-gray-700">🎯 Moves: {moves}</p>
           <p className="text-2xl mb-6 text-gray-700"> You earned {XP}XP.</p>
+          <p className="text-2xl mb-6 text-gray-700"> You earned {coins_earned}Coins.</p>
           <Button
             onClick={startGame}
             className="bg-purple-600 hover:bg-purple-700 text-white text-lg px-8 py-3 rounded-full shadow-lg"

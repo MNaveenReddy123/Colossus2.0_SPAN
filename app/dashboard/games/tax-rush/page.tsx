@@ -33,7 +33,7 @@ export default function TaxRushGame() {
   const router = useRouter();
   const { userData, refreshUserData } = useAuth();
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+  const [timeLeft, setTimeLeft] = useState(60); // 10 minutes
   const [currentItems, setCurrentItems] = useState<TaxItem[]>(taxItems);
   const [gameStatus, setGameStatus] = useState<"not_started" | "in_progress" | "completed">("not_started");
   const [draggedItem, setDraggedItem] = useState<TaxItem | null>(null);
@@ -223,13 +223,12 @@ export default function TaxRushGame() {
                     key={zone}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(zone)}
-                    className={`p-6 rounded-xl border-2 border-dashed text-center text-white font-medium ${
-                      zone === "Income"
+                    className={`p-6 rounded-xl border-2 border-dashed text-center text-white font-medium ${zone === "Income"
                         ? "border-yellow-300 bg-yellow-500/20"
                         : zone === "Deduction"
-                        ? "border-green-300 bg-green-500/20"
-                        : "border-red-300 bg-red-500/20"
-                    }`}
+                          ? "border-green-300 bg-green-500/20"
+                          : "border-red-300 bg-red-500/20"
+                      }`}
                     whileHover={{ scale: 1.02, borderColor: "#fff" }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >

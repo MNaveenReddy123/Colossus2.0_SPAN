@@ -1,0 +1,193 @@
+:root {
+    --dashboard-primary: 263 90% 51%;
+    --dashboard-primary-foreground: 0 0% 100%;
+    --dashboard-secondary: 326 100% 74%;
+    --dashboard-secondary-foreground: 210 40% 98%;
+    --dashboard-accent: 191 97% 77%;
+    --dashboard-accent-foreground: 222.2 47.4% 11.2%;
+    --dashboard-background: 224 71% 4%;
+    --dashboard-foreground: 213 31% 91%;
+    --dashboard-muted: 223 47% 11%;
+    --dashboard-muted-foreground: 215.4 16.3% 56.9%;
+    --dashboard-card: 222.2 84% 4.9%;
+    --dashboard-card-foreground: 210 40% 98%;
+    --dashboard-border: 216 34% 17%;
+    --dashboard-input: 216 34% 17%;
+    --dashboard-ring: 263 90% 51%;
+    --dashboard-success: 142 71% 45%;
+    --dashboard-warning: 38 92% 50%;
+    --dashboard-danger: 0 84% 60%;
+    --dashboard-info: 199 89% 48%;
+  }
+  
+  .dashboard-theme {
+    --background: var(--dashboard-background);
+    --foreground: var(--dashboard-foreground);
+    --card: var(--dashboard-card);
+    --card-foreground: var(--dashboard-card-foreground);
+    --popover: var(--dashboard-card);
+    --popover-foreground: var(--dashboard-card-foreground);
+    --primary: var(--dashboard-primary);
+    --primary-foreground: var(--dashboard-primary-foreground);
+    --secondary: var(--dashboard-secondary);
+    --secondary-foreground: var(--dashboard-secondary-foreground);
+    --accent: var(--dashboard-accent);
+    --accent-foreground: var(--dashboard-accent-foreground);
+    --muted: var(--dashboard-muted);
+    --muted-foreground: var(--dashboard-muted-foreground);
+    --destructive: var(--dashboard-danger);
+    --destructive-foreground: var(--dashboard-primary-foreground);
+    --border: var(--dashboard-border);
+    --input: var(--dashboard-input);
+    --ring: var(--dashboard-ring);
+    --success: var(--dashboard-success);
+    --warning: var(--dashboard-warning);
+    --danger: var(--dashboard-danger);
+    --info: var(--dashboard-info);
+  
+    color-scheme: dark;
+  }
+  
+  .dashboard-theme .gradient-heading {
+    background: linear-gradient(to right, hsl(var(--dashboard-primary)), hsl(var(--dashboard-secondary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+  
+  .dashboard-theme .gradient-card {
+    background: linear-gradient(135deg, hsl(var(--dashboard-card)) 0%, hsl(var(--dashboard-muted)) 100%);
+    border: 1px solid hsl(var(--dashboard-border));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .dashboard-theme .gradient-border {
+    position: relative;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .dashboard-theme .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 0.5rem;
+    padding: 1px;
+    background: linear-gradient(to right, hsl(var(--dashboard-primary)), hsl(var(--dashboard-secondary)));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  
+  .dashboard-theme .glow-effect {
+    position: relative;
+  }
+  
+  .dashboard-theme .glow-effect::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 15px 2px hsla(var(--dashboard-primary), 0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .dashboard-theme .glow-effect:hover::after {
+    opacity: 1;
+  }
+  
+  .dashboard-theme .animated-bg {
+    background: linear-gradient(
+      270deg,
+      hsla(var(--dashboard-primary), 0.1),
+      hsla(var(--dashboard-secondary), 0.1),
+      hsla(var(--dashboard-accent), 0.1),
+      hsla(var(--dashboard-primary), 0.1)
+    );
+    background-size: 400% 100%;
+    animation: gradient-shift 8s ease infinite;
+  }
+  
+  @keyframes gradient-shift {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  
+  .dashboard-theme .stat-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .dashboard-theme .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dashboard-theme .pulse {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 hsla(var(--dashboard-primary), 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px hsla(var(--dashboard-primary), 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsla(var(--dashboard-primary), 0);
+    }
+  }
+  
+  .dashboard-theme .progress-bar {
+    position: relative;
+    height: 8px;
+    border-radius: 4px;
+    background: hsl(var(--dashboard-muted));
+    overflow: hidden;
+  }
+  
+  .dashboard-theme .progress-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, hsl(var(--dashboard-primary)), hsl(var(--dashboard-secondary)));
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+  
+  .dashboard-theme .chart-container {
+    position: relative;
+    transition: transform 0.3s ease;
+  }
+  
+  .dashboard-theme .chart-container:hover {
+    transform: scale(1.02);
+  }
+  
+  .dashboard-theme .badge-glow {
+    animation: badge-pulse 2s infinite;
+  }
+  
+  @keyframes badge-pulse {
+    0% {
+      box-shadow: 0 0 0 0 hsla(var(--dashboard-secondary), 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 6px hsla(var(--dashboard-secondary), 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsla(var(--dashboard-secondary), 0);
+    }
+  }

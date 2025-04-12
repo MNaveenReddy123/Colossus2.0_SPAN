@@ -3,23 +3,30 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import {   Card,
+import {
+  Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,} from "@/components/ui/card"
+  CardTitle,
+} from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import {   ArrowLeft,
+import {
+  ArrowLeft,
   CheckCircle,
   XCircle,
   Clock,
   Award,
-  AlertTriangle, } from "lucide-react"
+  AlertTriangle,
+} from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { saveActivityProgress } from "@/actions/user-actions"
+import { toast } from "@/components/ui/use-toast"
 
 // Quiz questions
-const questions= [
+const questions = [
   {
     id: 1,
     question: "What is a credit score?",
@@ -109,7 +116,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "Checking your own credit report is a soft inquiry and doesn’t affect your score, so you can do it anytime.",
+      "Checking your own credit report is a soft inquiry and doesn't affect your score, so you can do it anytime.",
   },
   {
     id: 8,
@@ -148,7 +155,7 @@ const questions= [
     ],
     correctAnswer: "a",
     explanation:
-      "Credit utilization, or the amount of credit you’re using, is 30% of your FICO score, making it the second biggest factor.",
+      "Credit utilization, or the amount of credit you're using, is 30% of your FICO score, making it the second biggest factor.",
   },
   {
     id: 11,
@@ -230,10 +237,10 @@ const questions= [
   },
   {
     id: 17,
-    question: "What does ‘credit utilization’ measure?",
+    question: "What does 'credit utilization' measure?",
     options: [
-      { id: "a", text: "How long you’ve had credit" },
-      { id: "b", text: "The percentage of available credit you’re using" },
+      { id: "a", text: "How long you've had credit" },
+      { id: "b", text: "The percentage of available credit you're using" },
       { id: "c", text: "Your total income" },
       { id: "d", text: "The number of credit inquiries" },
     ],
@@ -321,7 +328,7 @@ const questions= [
   },
   {
     id: 24,
-    question: "What does it mean to ‘freeze’ your credit?",
+    question: "What does it mean to 'freeze' your credit?",
     options: [
       { id: "a", text: "Close all credit accounts" },
       { id: "b", text: "Prevent new credit from being opened in your name" },
@@ -350,7 +357,7 @@ const questions= [
     question: "What is a co-signer on a loan?",
     options: [
       { id: "a", text: "Someone who pays your taxes" },
-      { id: "b", text: "Someone who agrees to repay the loan if you don’t" },
+      { id: "b", text: "Someone who agrees to repay the loan if you don't" },
       { id: "c", text: "A type of credit card" },
       { id: "d", text: "A bank employee" },
     ],
@@ -386,10 +393,10 @@ const questions= [
   },
   {
     id: 29,
-    question: "What does ‘length of credit history’ refer to?",
+    question: "What does 'length of credit history' refer to?",
     options: [
       { id: "a", text: "How much you owe" },
-      { id: "b", text: "How long you’ve had credit accounts" },
+      { id: "b", text: "How long you've had credit accounts" },
       { id: "c", text: "The number of credit cards you own" },
       { id: "d", text: "Your income level" },
     ],
@@ -486,7 +493,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "An authorized user can use the card, and the account’s history may help their credit score.",
+      "An authorized user can use the card, and the account's history may help their credit score.",
   },
   {
     id: 37,
@@ -516,7 +523,7 @@ const questions= [
   },
   {
     id: 39,
-    question: "What does ‘defaulting on a loan’ mean?",
+    question: "What does 'defaulting on a loan' mean?",
     options: [
       { id: "a", text: "Paying it off early" },
       { id: "b", text: "Failing to make payments as agreed" },
@@ -525,7 +532,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "Defaulting occurs when you don’t repay a loan, severely damaging your credit score.",
+      "Defaulting occurs when you don't repay a loan, severely damaging your credit score.",
   },
   {
     id: 40,
@@ -551,7 +558,7 @@ const questions= [
     ],
     correctAnswer: "a",
     explanation:
-      "Checking your own score is a soft inquiry and doesn’t harm it, unlike the myth suggests.",
+      "Checking your own score is a soft inquiry and doesn't harm it, unlike the myth suggests.",
   },
   {
     id: 42,
@@ -581,7 +588,7 @@ const questions= [
   },
   {
     id: 44,
-    question: "What is identity theft’s impact on your credit score?",
+    question: "What is identity theft's impact on your credit score?",
     options: [
       { id: "a", text: "It improves it" },
       { id: "b", text: "It can lower it if accounts are misused" },
@@ -616,7 +623,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "Landlords use credit scores to evaluate if you’ll pay rent on time, reflecting financial responsibility.",
+      "Landlords use credit scores to evaluate if you'll pay rent on time, reflecting financial responsibility.",
   },
   {
     id: 47,
@@ -724,7 +731,7 @@ const questions= [
   },
   {
     id: 55,
-    question: "What does ‘revolving credit’ mean?",
+    question: "What does 'revolving credit' mean?",
     options: [
       { id: "a", text: "A fixed loan amount" },
       { id: "b", text: "Credit you can reuse, like a credit card" },
@@ -759,7 +766,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "A soft inquiry, like checking your own credit, doesn’t impact your score.",
+      "A soft inquiry, like checking your own credit, doesn't impact your score.",
   },
   {
     id: 58,
@@ -798,7 +805,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "Low utilization shows you’re not over-relying on credit, boosting your score.",
+      "Low utilization shows you're not over-relying on credit, boosting your score.",
   },
   {
     id: 61,
@@ -841,7 +848,7 @@ const questions= [
   },
   {
     id: 64,
-    question: "What does ‘creditworthiness’ mean?",
+    question: "What does 'creditworthiness' mean?",
     options: [
       { id: "a", text: "Your total savings" },
       { id: "b", text: "Your ability to repay debt" },
@@ -902,7 +909,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "Settling a debt for less than owed can hurt your score, as it shows you didn’t fully repay.",
+      "Settling a debt for less than owed can hurt your score, as it shows you didn't fully repay.",
   },
   {
     id: 69,
@@ -945,7 +952,7 @@ const questions= [
   },
   {
     id: 72,
-    question: "What does ‘public record’ mean on a credit report?",
+    question: "What does 'public record' mean on a credit report?",
     options: [
       { id: "a", text: "Your social media posts" },
       { id: "b", text: "Legal events like bankruptcy" },
@@ -974,7 +981,7 @@ const questions= [
     question: "What is a good way to avoid credit score damage?",
     options: [
       { id: "a", text: "Max out all cards" },
-      { id: "b", text: "Pay debts before they’re delinquent" },
+      { id: "b", text: "Pay debts before they're delinquent" },
       { id: "c", text: "Apply for many loans" },
       { id: "d", text: "Close old accounts" },
     ],
@@ -1000,7 +1007,7 @@ const questions= [
     question: "How can a high credit limit help your score?",
     options: [
       { id: "a", text: "It increases debt" },
-      { id: "b", text: "It lowers utilization if you don’t overspend" },
+      { id: "b", text: "It lowers utilization if you don't overspend" },
       { id: "c", text: "It raises interest rates" },
       { id: "d", text: "It shortens credit history" },
     ],
@@ -1010,7 +1017,7 @@ const questions= [
   },
   {
     id: 77,
-    question: "What is a foreclosure’s effect on your credit score?",
+    question: "What is a foreclosure's effect on your credit score?",
     options: [
       { id: "a", text: "It improves it" },
       { id: "b", text: "It can drop it significantly" },
@@ -1032,7 +1039,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "A higher limit can improve your score by reducing utilization, if you don’t increase spending.",
+      "A higher limit can improve your score by reducing utilization, if you don't increase spending.",
   },
   {
     id: 79,
@@ -1049,7 +1056,7 @@ const questions= [
   },
   {
     id: 80,
-    question: "What does ‘credit mix’ refer to?",
+    question: "What does 'credit mix' refer to?",
     options: [
       { id: "a", text: "Your income sources" },
       { id: "b", text: "The variety of credit types you have" },
@@ -1071,7 +1078,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "Divorce itself doesn’t affect your score, but missed payments on joint accounts can lower it.",
+      "Divorce itself doesn't affect your score, but missed payments on joint accounts can lower it.",
   },
   {
     id: 82,
@@ -1153,7 +1160,7 @@ const questions= [
   },
   {
     id: 88,
-    question: "What does ‘installment credit’ mean?",
+    question: "What does 'installment credit' mean?",
     options: [
       { id: "a", text: "Credit you reuse, like a card" },
       { id: "b", text: "A fixed loan repaid in payments" },
@@ -1266,7 +1273,7 @@ const questions= [
     ],
     correctAnswer: "b",
     explanation:
-      "Paying a collection doesn’t remove it but may lessen its negative weight over time.",
+      "Paying a collection doesn't remove it but may lessen its negative weight over time.",
   },
   {
     id: 97,
@@ -1287,12 +1294,12 @@ const questions= [
     options: [
       { id: "a", text: "They must report to all" },
       { id: "b", text: "They choose which to report to" },
-      { id: "c", text: "It’s illegal" },
+      { id: "c", text: "It's illegal" },
       { id: "d", text: "It improves your score" },
     ],
     correctAnswer: "b",
     explanation:
-      "Creditors aren’t required to report to all bureaus, leading to score variations.",
+      "Creditors aren't required to report to all bureaus, leading to score variations.",
   },
   {
     id: 99,
@@ -1323,345 +1330,386 @@ const questions= [
 ];
 
 
-  const getRandomQuestions = (questionsArray, count) => {
-    const shuffled = [...questionsArray].sort(() => 0.5 - Math.random())
-    return shuffled.slice(0, count)
+const getRandomQuestions = (questionsArray, count) => {
+  const shuffled = [...questionsArray].sort(() => 0.5 - Math.random())
+  return shuffled.slice(0, count)
+}
+
+export default function CreditScoreQuizPage() {
+  const [quizState, setQuizState] = useState("start") // start, playing, result
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [selectedAnswers, setSelectedAnswers] = useState({})
+  const [showExplanation, setShowExplanation] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(300) // 5 minutes in seconds
+  const [timerActive, setTimerActive] = useState(false)
+  const [activeQuestions, setActiveQuestions] = useState([]) // Store randomly selected questions
+  const { userData, refreshUserData } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleStart = () => {
+    const randomQuestions = getRandomQuestions(questions, 10) // Select 10 random questions
+    setActiveQuestions(randomQuestions)
+    setQuizState("playing")
+    setCurrentQuestion(0)
+    setSelectedAnswers({})
+    setShowExplanation(false)
+    setTimeLeft(300)
+    setTimerActive(true)
   }
-  
-  export default function BudgetingQuizPage() {
-    const [quizState, setQuizState] = useState("start") // start, playing, result
-    const [currentQuestion, setCurrentQuestion] = useState(0)
-    const [selectedAnswers, setSelectedAnswers] = useState({})
-    const [showExplanation, setShowExplanation] = useState(false)
-    const [timeLeft, setTimeLeft] = useState(300) // 5 minutes in seconds
-    const [timerActive, setTimerActive] = useState(false)
-    const [activeQuestions, setActiveQuestions] = useState([]) // Store randomly selected questions
-  
-    const handleStart = () => {
-      const randomQuestions = getRandomQuestions(questions, 10) // Select 10 random questions
-      setActiveQuestions(randomQuestions)
-      setQuizState("playing")
-      setCurrentQuestion(0)
-      setSelectedAnswers({})
-      setShowExplanation(false)
-      setTimeLeft(300)
-      setTimerActive(true)
-    }
-  
-    const handleAnswerSelect = (questionId, answerId) => {
-      if (selectedAnswers[questionId]) return // Prevent changing answer
-  
-      setSelectedAnswers({
-        ...selectedAnswers,
-        [questionId]: answerId,
-      })
-  
-      setShowExplanation(true)
-  
-      // Move to next question after delay
-      setTimeout(() => {
-        if (currentQuestion < activeQuestions.length - 1) {
-          setCurrentQuestion(currentQuestion + 1)
-          setShowExplanation(false)
-        } else {
-          setQuizState("result")
-          setTimerActive(false)
-        }
-      }, 2000)
-    }
-  
-    // Calculate score
-    const calculateScore = () => {
-      let correct = 0
-      Object.keys(selectedAnswers).forEach((questionId) => {
-        const question = activeQuestions.find((q) => q.id === Number.parseInt(questionId))
-        if (question && selectedAnswers[questionId] === question.correctAnswer) {
-          correct++
-        }
-      })
-      return correct
-    }
-  
-    // Format time
-    const formatTime = (seconds) => {
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins}:${secs < 10 ? "0" : ""}${secs}`
-    }
-  
-    // Effect for timer
-    useEffect(() => {
-      let interval
-      if (timerActive && timeLeft > 0) {
-        interval = setInterval(() => {
-          setTimeLeft((prev) => prev - 1)
-        }, 1000)
-      } else if (timeLeft === 0) {
+
+  const handleAnswerSelect = (questionId, answerId) => {
+    if (selectedAnswers[questionId]) return // Prevent changing answer
+
+    setSelectedAnswers({
+      ...selectedAnswers,
+      [questionId]: answerId,
+    })
+
+    setShowExplanation(true)
+
+    // Move to next question after delay
+    setTimeout(() => {
+      if (currentQuestion < activeQuestions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1)
+        setShowExplanation(false)
+      } else {
         setQuizState("result")
         setTimerActive(false)
+        handleQuizEnd()
       }
-  
-      return () => clearInterval(interval)
-    }, [timerActive, timeLeft])
-  
-    return (
-      <div className="flex flex-col">
-        <div className="flex-1 space-y-4 p-8 pt-6">
-          <div className="flex items-center justify-between space-y-2">
-            <div className="flex items-center gap-2">
-              <Link href="/dashboard/quizzes">
-                <Button variant="outline" size="icon" className="h-8 w-8">
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              </Link>
-              <h2 className="text-3xl font-bold tracking-tight">Credit-Score Basics Quiz</h2>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-sm">
-                Beginner
-              </Badge>
-            </div>
+    }, 2000)
+  }
+
+  // Calculate score
+  const calculateScore = () => {
+    let correct = 0
+    Object.keys(selectedAnswers).forEach((questionId) => {
+      const question = activeQuestions.find((q) => q.id === Number.parseInt(questionId))
+      if (question && selectedAnswers[questionId] === question.correctAnswer) {
+        correct++
+      }
+    })
+    return correct
+  }
+
+  // Format time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`
+  }
+
+  // Effect for timer
+  useEffect(() => {
+    let interval
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1)
+      }, 1000)
+    } else if (timeLeft === 0) {
+      setQuizState("result")
+      setTimerActive(false)
+    }
+
+    return () => clearInterval(interval)
+  }, [timerActive, timeLeft])
+
+  // Handle Quiz End
+  const handleQuizEnd = async () => {
+    if (!userData || isSubmitting) return
+
+    const score = calculateScore()
+    const xpEarned = Math.round((score / activeQuestions.length) * 30)
+    const coinsEarned = Math.round((score / activeQuestions.length) * 20)
+
+    try {
+      setIsSubmitting(true)
+      const result = await saveActivityProgress(
+        userData.id,
+        "quiz",
+        "Credit Score Basics",
+        score,
+        xpEarned,
+        coinsEarned
+      )
+
+      if (result.success) {
+        await refreshUserData()
+        toast({
+          title: "Quiz Complete!",
+          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+        })
+      } else {
+        throw new Error("Failed to save progress")
+      }
+    } catch (error) {
+      console.error("Error saving quiz progress:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save progress.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col">
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex items-center justify-between space-y-2">
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard/quizzes">
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h2 className="text-3xl font-bold tracking-tight">Credit-Score Basics Quiz</h2>
           </div>
-  
-          {quizState === "start" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Credit-Score Basics Quiz</CardTitle>
-                <CardDescription>Test your knowledge about Credit-Score principles</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="rounded-lg border p-4">
-                  <h3 className="text-lg font-medium">Quiz Instructions</h3>
-                  <ul className="mt-2 space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <Clock className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>You have 5 minutes to complete 10 multiple-choice questions randomly selected from a larger set</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <Clock className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Each question has one correct answer</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <Clock className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>You'll see an explanation after each answer</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <Clock className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>You can earn up to 20 coins and 30 XP for a perfect score</span>
-                    </li>
-                  </ul>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className="text-sm">
+              Beginner
+            </Badge>
+          </div>
+        </div>
+
+        {quizState === "start" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Credit-Score Basics Quiz</CardTitle>
+              <CardDescription>Test your knowledge about Credit-Score principles</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="rounded-lg border p-4">
+                <h3 className="text-lg font-medium">Quiz Instructions</h3>
+                <ul className="mt-2 space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <Clock className="h-3 w-3 text-primary" />
+                    </div>
+                    <span>You have 5 minutes to complete 10 multiple-choice questions randomly selected from a larger set</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <Clock className="h-3 w-3 text-primary" />
+                    </div>
+                    <span>Each question has one correct answer</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <Clock className="h-3 w-3 text-primary" />
+                    </div>
+                    <span>You'll see an explanation after each answer</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <Clock className="h-3 w-3 text-primary" />
+                    </div>
+                    <span>You can earn up to 20 coins and 30 XP for a perfect score</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="rounded-lg border p-4">
+                <h3 className="text-lg font-medium">Topics Covered</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  This quiz covers credit scores, factors affecting scores, improving credit health, and the impact of credit-related behaviors.
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleStart} className="w-full">
+                Start Quiz
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+
+        {quizState === "playing" && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>
+                    Question {currentQuestion + 1} of {activeQuestions.length}
+                  </CardTitle>
+                  <CardDescription>Credit-Score Basics</CardDescription>
                 </div>
-  
-                <div className="rounded-lg border p-4">
-                  <h3 className="text-lg font-medium">Topics Covered</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    This quiz covers credit scores, factors affecting scores, improving credit health, and the impact of credit-related behaviors.
-                  </p>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleStart} className="w-full">
-                  Start Quiz
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-  
-          {quizState === "playing" && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>
-                      Question {currentQuestion + 1} of {activeQuestions.length}
-                    </CardTitle>
-                    <CardDescription>Credit-Score Basics</CardDescription>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className={timeLeft < 60 ? "text-red-500" : ""}>{formatTime(timeLeft)}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className={timeLeft < 60 ? "text-red-500" : ""}>{formatTime(timeLeft)}</span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress</span>
+                  <span>{Math.round((currentQuestion / activeQuestions.length) * 100)}%</span>
+                </div>
+                <Progress value={(currentQuestion / activeQuestions.length) * 100} className="h-2" />
+              </div>
+
+              <div className="rounded-lg border p-4">
+                <p className="text-sm font-medium">{activeQuestions[currentQuestion].question}</p>
+              </div>
+
+              <div className="space-y-3">
+                {activeQuestions[currentQuestion].options.map((option) => {
+                  const isSelected = selectedAnswers[activeQuestions[currentQuestion].id] === option.id
+                  const isCorrect = option.id === activeQuestions[currentQuestion].correctAnswer
+
+                  return (
+                    <button
+                      key={option.id}
+                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${isSelected
+                          ? isCorrect
+                            ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                            : "border-red-500 bg-red-50 dark:bg-red-900/20"
+                          : ""
+                        }`}
+                      onClick={() => handleAnswerSelect(activeQuestions[currentQuestion].id, option.id)}
+                      disabled={selectedAnswers[activeQuestions[currentQuestion].id] !== undefined}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{option.text}</span>
+                        {isSelected &&
+                          (isCorrect ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          ))}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {showExplanation && (
+                <div
+                  className={`rounded-md p-3 ${selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
+                      ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                      : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                    }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer ? (
+                      <CheckCircle className="h-5 w-5 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">
+                        {selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
+                          ? "Correct!"
+                          : "Incorrect"}
+                      </p>
+                      <p className="text-sm">{activeQuestions[currentQuestion].explanation}</p>
                     </div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Progress</span>
-                    <span>{Math.round((currentQuestion / activeQuestions.length) * 100)}%</span>
-                  </div>
-                  <Progress value={(currentQuestion / activeQuestions.length) * 100} className="h-2" />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {quizState === "result" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quiz Complete!</CardTitle>
+              <CardDescription>You've completed the Budgeting Basics Quiz</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex flex-col items-center justify-center space-y-4 py-6">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <Award className="h-12 w-12 text-primary" />
                 </div>
-  
-                <div className="rounded-lg border p-4">
-                  <p className="text-sm font-medium">{activeQuestions[currentQuestion].question}</p>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold">
+                    Your Score: {calculateScore()}/{activeQuestions.length}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {calculateScore() >= 8
+                      ? "Excellent! You have a strong understanding of budgeting principles."
+                      : calculateScore() >= 6
+                        ? "Good job! You understand the basics of budgeting."
+                        : "You're on your way to understanding budgeting principles."}
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    You've earned {Math.round((calculateScore() / activeQuestions.length) * 20)} Coins and{" "}
+                    {Math.round((calculateScore() / activeQuestions.length) * 30)} XP!
+                  </p>
                 </div>
-  
-                <div className="space-y-3">
-                  {activeQuestions[currentQuestion].options.map((option) => {
-                    const isSelected = selectedAnswers[activeQuestions[currentQuestion].id] === option.id
-                    const isCorrect = option.id === activeQuestions[currentQuestion].correctAnswer
-  
+              </div>
+
+              <div className="rounded-lg border p-4">
+                <h3 className="text-lg font-medium">Question Summary</h3>
+                <div className="mt-4 space-y-3">
+                  {activeQuestions.map((question, index) => {
+                    const userAnswer = selectedAnswers[question.id]
+                    const isCorrect = userAnswer === question.correctAnswer
+
                     return (
-                      <button
-                        key={option.id}
-                        className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
-                          isSelected
-                            ? isCorrect
-                              ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                              : "border-red-500 bg-red-50 dark:bg-red-900/20"
-                            : ""
-                        }`}
-                        onClick={() => handleAnswerSelect(activeQuestions[currentQuestion].id, option.id)}
-                        disabled={selectedAnswers[activeQuestions[currentQuestion].id] !== undefined}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{option.text}</span>
-                          {isSelected &&
-                            (isCorrect ? (
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-red-500" />
-                            ))}
+                      <div key={question.id} className="flex items-center gap-2">
+                        <div
+                          className={`flex h-6 w-6 items-center justify-center rounded-full ${isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            }`}
+                        >
+                          {isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                         </div>
-                      </button>
+                        <span className="text-sm">
+                          Question {index + 1}: {isCorrect ? "Correct" : "Incorrect"}
+                        </span>
+                      </div>
                     )
                   })}
                 </div>
-  
-                {showExplanation && (
-                  <div
-                    className={`rounded-md p-3 ${
-                      selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
-                        ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer ? (
-                        <CheckCircle className="h-5 w-5 shrink-0" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5 shrink-0" />
-                      )}
-                      <div>
-                        <p className="text-sm font-medium">
-                          {selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
-                            ? "Correct!"
-                            : "Incorrect"}
-                        </p>
-                        <p className="text-sm">{activeQuestions[currentQuestion].explanation}</p>
-                      </div>
+              </div>
+
+              <div className="rounded-lg border p-4">
+                <h3 className="text-lg font-medium">Key Takeaways</h3>
+                <ul className="mt-2 space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-  
-          {quizState === "result" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Quiz Complete!</CardTitle>
-                <CardDescription>You've completed the Budgeting Basics Quiz</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex flex-col items-center justify-center space-y-4 py-6">
-                  <div className="rounded-full bg-primary/10 p-4">
-                    <Award className="h-12 w-12 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold">
-                      Your Score: {calculateScore()}/{activeQuestions.length}
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {calculateScore() >= 8
-                        ? "Excellent! You have a strong understanding of budgeting principles."
-                        : calculateScore() >= 6
-                          ? "Good job! You understand the basics of budgeting."
-                          : "You're on your way to understanding budgeting principles."}
-                    </p>
-                    <p className="mt-2 text-muted-foreground">
-                      You've earned {Math.round((calculateScore() / activeQuestions.length) * 20)} Coins and{" "}
-                      {Math.round((calculateScore() / activeQuestions.length) * 30)} XP!
-                    </p>
-                  </div>
-                </div>
-  
-                <div className="rounded-lg border p-4">
-                  <h3 className="text-lg font-medium">Question Summary</h3>
-                  <div className="mt-4 space-y-3">
-                    {activeQuestions.map((question, index) => {
-                      const userAnswer = selectedAnswers[question.id]
-                      const isCorrect = userAnswer === question.correctAnswer
-  
-                      return (
-                        <div key={question.id} className="flex items-center gap-2">
-                          <div
-                            className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                              isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                          </div>
-                          <span className="text-sm">
-                            Question {index + 1}: {isCorrect ? "Correct" : "Incorrect"}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-  
-                <div className="rounded-lg border p-4">
-                  <h3 className="text-lg font-medium">Key Takeaways</h3>
-                  <ul className="mt-2 space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <CheckCircle className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>A credit score reflects your creditworthiness and affects loan approvals.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <CheckCircle className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Payment history and credit utilization are major factors influencing your score.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <CheckCircle className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Good credit habits—like timely payments—help build a strong credit profile.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                        <CheckCircle className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Regularly checking your credit report can prevent errors and fraud.</span>
-                    </li>
-                  </ul>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={handleStart}>
-                  Retake Quiz
-                </Button>
-                <Link href="/dashboard/quizzes">
-                  <Button>Back to Quizzes</Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          )}
-        </div>
+                    <span>A credit score reflects your creditworthiness and affects loan approvals.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                    </div>
+                    <span>Payment history and credit utilization are major factors influencing your score.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                    </div>
+                    <span>Good credit habits—like timely payments—help build a strong credit profile.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                    </div>
+                    <span>Regularly checking your credit report can prevent errors and fraud.</span>
+                  </li>
+                </ul>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={handleStart}>
+                Retake Quiz
+              </Button>
+              <Link href="/dashboard/quizzes">
+                <Button>Back to Quizzes</Button>
+              </Link>
+            </CardFooter>
+          </Card>
+        )}
       </div>
-    )
-  }
+    </div>
+  )
+}

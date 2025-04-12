@@ -34,6 +34,8 @@ export default function HomeBuyingSimulationPage() {
   const [loanTerm, setLoanTerm] = useState(30)
   const [monthlyOtherCosts, setMonthlyOtherCosts] = useState(500) // Property taxes, insurance, maintenance
   const [completed, setCompleted] = useState(false)
+  const [xpEarned, setXpEarned] = useState(0)
+  const [coinsEarned, setCoinsEarned] = useState(0)
 
   const { userData, refreshUserData } = useAuth()
 
@@ -68,6 +70,7 @@ export default function HomeBuyingSimulationPage() {
       setStep(step + 1)
     } else {
       setCompleted(true)
+      saveSimulationResults()
     }
   }
 
@@ -85,9 +88,9 @@ export default function HomeBuyingSimulationPage() {
     const downPaymentScore = downPaymentPercent >= 20 ? 30 : downPaymentPercent
     const totalScore = affordabilityScore + downPaymentScore
 
-    // Calculate rewards
-    const xpEarned = 50
-    const coinsEarned = 30
+    // Calculate rewards - smaller and more incremental
+    const earnedXp = 3
+    const earnedCoins = 4
 
     try {
       const result = await saveActivityProgress(
@@ -95,17 +98,19 @@ export default function HomeBuyingSimulationPage() {
         "simulation",
         "Home Buying Basics",
         totalScore,
-        xpEarned,
-        coinsEarned,
+        earnedXp,
+        earnedCoins,
       )
 
       if (result.success) {
+        setXpEarned(earnedXp)
+        setCoinsEarned(earnedCoins)
         await refreshUserData()
 
         toast({
           title: "Simulation Completed!",
-          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
-          variant: "default",
+          description: `You earned ${earnedXp} XP and ${earnedCoins} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
         })
       }
     } catch (error) {
@@ -116,11 +121,6 @@ export default function HomeBuyingSimulationPage() {
         variant: "destructive",
       })
     }
-  }
-
-  const handleComplete = () => {
-    setCompleted(true)
-    saveSimulationResults()
   }
 
   return (
@@ -425,9 +425,8 @@ export default function HomeBuyingSimulationPage() {
                             <div className="flex justify-between">
                               <span>Disposable Income:</span>
                               <span
-                                className={`font-medium ${
-                                  disposableIncome >= 0 ? "text-green-600" : "text-red-600"
-                                }`}
+                                className={`font-medium ${disposableIncome >= 0 ? "text-green-600" : "text-red-600"
+                                  }`}
                               >
                                 ${disposableIncome.toFixed(2)}
                               </span>
@@ -435,9 +434,8 @@ export default function HomeBuyingSimulationPage() {
                             <div className="flex justify-between">
                               <span>Debt-to-Income Ratio:</span>
                               <span
-                                className={`font-medium ${
-                                  debtToIncomeRatio <= 36 ? "text-green-600" : "text-red-600"
-                                }`}
+                                className={`font-medium ${debtToIncomeRatio <= 36 ? "text-green-600" : "text-red-600"
+                                  }`}
                               >
                                 {debtToIncomeRatio.toFixed(1)}%
                               </span>
@@ -508,7 +506,7 @@ export default function HomeBuyingSimulationPage() {
                   <div className="text-center">
                     <h3 className="text-xl font-bold">Congratulations!</h3>
                     <p className="text-muted-foreground">
-                      You've earned 50 XP and 30 Coins for completing this simulation
+                      You've earned {xpEarned} XP and {coinsEarned} Coins for completing this simulation
                     </p>
                   </div>
                 </div>
@@ -544,9 +542,8 @@ export default function HomeBuyingSimulationPage() {
                       <div className="flex justify-between">
                         <span>Disposable Income:</span>
                         <span
-                          className={`font-medium ${
-                            disposableIncome >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
+                          className={`font-medium ${disposableIncome >= 0 ? "text-green-600" : "text-red-600"
+                            }`}
                         >
                           ${disposableIncome.toFixed(2)}
                         </span>
@@ -554,9 +551,8 @@ export default function HomeBuyingSimulationPage() {
                       <div className="flex justify-between">
                         <span>Debt-to-Income Ratio:</span>
                         <span
-                          className={`font-medium ${
-                            debtToIncomeRatio <= 36 ? "text-green-600" : "text-red-600"
-                          }`}
+                          className={`font-medium ${debtToIncomeRatio <= 36 ? "text-green-600" : "text-red-600"
+                            }`}
                         >
                           {debtToIncomeRatio.toFixed(1)}%
                         </span>
