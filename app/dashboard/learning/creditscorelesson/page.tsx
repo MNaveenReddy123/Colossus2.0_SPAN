@@ -97,14 +97,36 @@ export default function creditscorelearning() {
           🧠 Tip: Set reminders or auto-pay to never miss due dates.
         </p>
       </section>
+      <section className="mb-10">
+        {" "}
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/0ddgrHehprk?si=iWY86E8-Mkn6xL27"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/T5UHXCrW0gI?si=J71HfWAjS8lyzfnj"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </section>
 
       <div className="text-center mt-8">
         <Link href="/dashboard/quizzes/credit-score">
-        <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full font-semibold transition">
-          📚 Go to Quiz
-        </button>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full font-semibold transition">
+            📚 Go to Quiz
+          </button>
         </Link>
-
       </div>
     </div>
   );

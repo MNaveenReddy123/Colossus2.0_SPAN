@@ -103,6 +103,29 @@ export default function budgetinglesson() {
           rules.
         </p>
       </section>
+      <section className="mb-10">
+        {" "}
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/sVKQn2I4HDM?si=qCDUsdiqYL7jSqHX"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/CbhjhWleKGE?si=GxjVkf3d7_nTSybi"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </section>
 
       <div className="text-center mt-8">
         <Link href="/dashboard/quizzes/budgeting">
