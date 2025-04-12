@@ -110,20 +110,20 @@ export default function budgetinglesson() {
           height="315"
           src="https://www.youtube.com/embed/sVKQn2I4HDM?si=qCDUsdiqYL7jSqHX"
           title="YouTube video player"
-          frameborder="0"
+          frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
         ></iframe>
         <iframe
           width="560"
           height="315"
           src="https://www.youtube.com/embed/CbhjhWleKGE?si=GxjVkf3d7_nTSybi"
           title="YouTube video player"
-          frameborder="0"
+          frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
         ></iframe>
       </section>
 
