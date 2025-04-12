@@ -8,10 +8,28 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CreditCard, Award, Heart, AlertTriangle, CheckCircle, XCircle } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/contexts/auth-context"
+import { saveActivityProgress } from "@/actions/user-actions"
+
+// Define types
+type Option = {
+  id: string
+  text: string
+  impact: number
+  feedback: string
+}
+
+type Scenario = {
+  id: number
+  title: string
+  description: string
+  options: Option[]
+}
+
+type GameState = "start" | "playing" | "result"
 
 // Game scenarios
-const scenarios = [
+const scenarios: Scenario[] = [
   {
     id: 1,
     title: "Credit Card Payment",
@@ -171,14 +189,14 @@ const scenarios = [
 ]
 
 export default function CreditScoreGamePage() {
-  const [gameState, setGameState] = useState("start") // start, playing, result
+  const [gameState, setGameState] = useState<GameState>("start")
   const [currentScenario, setCurrentScenario] = useState(0)
   const [score, setScore] = useState(650) // Starting credit score
   const [lives, setLives] = useState(3)
-  const [selectedOption, setSelectedOption] = useState(null)
-  const [feedback, setFeedback] = useState(null)
+  const [selectedOption, setSelectedOption] = useState<Option | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
   const [gameCompleted, setGameCompleted] = useState(false)
-  const { userData, refreshUserData, saveActivityProgress } = useAuth()
+  const { userData, refreshUserData } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleStart = () => {
@@ -191,7 +209,7 @@ export default function CreditScoreGamePage() {
     setGameCompleted(false)
   }
 
-  const handleOptionSelect = (option) => {
+  const handleOptionSelect = (option: Option) => {
     if (selectedOption) return // Prevent multiple selections
 
     setSelectedOption(option)
@@ -210,6 +228,7 @@ export default function CreditScoreGamePage() {
     if (lives <= 1 && option.impact < 0) {
       setTimeout(() => {
         setGameState("result")
+        handleGameEnd()
       }, 2000)
     } else {
       // Move to next scenario after delay
@@ -221,6 +240,7 @@ export default function CreditScoreGamePage() {
         } else {
           setGameCompleted(true)
           setGameState("result")
+          handleGameEnd()
         }
       }, 2000)
     }
@@ -248,9 +268,8 @@ export default function CreditScoreGamePage() {
     return { xp: 15, coins: 10 }
   }
 
-  // Update the handleGameEnd function to use the updateUserCoins function from the auth context
   const handleGameEnd = async () => {
-    if (!userData) return
+    if (!userData || isSubmitting) return
 
     // Calculate final score
     const finalScore = Math.round(score)
@@ -267,24 +286,24 @@ export default function CreditScoreGamePage() {
         "Credit Score Adventure",
         finalScore,
         xpEarned,
-        coinsEarned,
+        coinsEarned
       )
 
       if (result.success) {
-        // Update the user's coins in the context
         await refreshUserData()
-
         toast({
           title: "Game Completed!",
           description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
-          variant: "default",
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
         })
+      } else {
+        throw new Error("Failed to save progress")
       }
     } catch (error) {
       console.error("Error saving game progress:", error)
       toast({
         title: "Error",
-        description: "Failed to save your progress. Please try again.",
+        description: "Failed to save progress.",
         variant: "destructive",
       })
     } finally {
@@ -407,13 +426,12 @@ export default function CreditScoreGamePage() {
                 {scenarios[currentScenario].options.map((option) => (
                   <button
                     key={option.id}
-                    className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
-                      selectedOption?.id === option.id
-                        ? option.impact >= 0
-                          ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                          : "border-red-500 bg-red-50 dark:bg-red-900/20"
-                        : ""
-                    }`}
+                    className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${selectedOption?.id === option.id
+                      ? option.impact >= 0
+                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                        : "border-red-500 bg-red-50 dark:bg-red-900/20"
+                      : ""
+                      }`}
                     onClick={() => handleOptionSelect(option)}
                     disabled={selectedOption !== null}
                   >
@@ -430,13 +448,12 @@ export default function CreditScoreGamePage() {
                 ))}
               </div>
 
-              {feedback && (
+              {feedback && selectedOption && (
                 <div
-                  className={`rounded-md p-3 ${
-                    selectedOption.impact >= 0
-                      ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                  }`}
+                  className={`rounded-md p-3 ${selectedOption.impact >= 0
+                    ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                    }`}
                 >
                   <div className="flex items-start gap-2">
                     {selectedOption.impact >= 0 ? (

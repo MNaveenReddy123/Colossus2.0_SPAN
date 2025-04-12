@@ -38,6 +38,7 @@ export default function BudgetingSimulationPage() {
     other: 150,
   })
   const [completed, setCompleted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const totalExpenses = Object.values(expenses).reduce((sum, value) => sum + value, 0)
   const balance = income - totalExpenses
@@ -52,7 +53,7 @@ export default function BudgetingSimulationPage() {
     if (step < 4) {
       setStep(step + 1)
     } else {
-      setCompleted(true)
+      handleComplete()
     }
   }
 
@@ -63,52 +64,55 @@ export default function BudgetingSimulationPage() {
   }
 
   const saveSimulationResults = async () => {
-    if (!userData) return
+    if (!userData || isSubmitting) return;
 
-    // Calculate score based on balance and budget quality
-    const balanceScore = balance >= 0 ? 50 : 0
-    const savingsScore = expenses.savings >= 300 ? 30 : Math.floor(expenses.savings / 10)
-    const totalScore = balanceScore + savingsScore
+    // Calculate score based on multiple factors
+    const balanceScore = balance >= 0 ? 50 : 0;
+    const savingsScore = expenses.savings >= 300 ? 30 : Math.floor(expenses.savings / 10);
+    const emergencyFundScore = expenses.savings >= 500 ? 20 : 0;
+    const totalScore = balanceScore + savingsScore + emergencyFundScore;
 
-    // Calculate rewards
-    const xpEarned = 30
-    const coinsEarned = 20
+    // Calculate rewards based on score
+    const xpEarned = Math.round((totalScore / 100) * 40); // Up to 40 XP
+    const coinsEarned = Math.round((totalScore / 100) * 25); // Up to 25 coins
 
     try {
+      setIsSubmitting(true);
       const result = await saveActivityProgress(
         userData.id,
         "simulation",
         "Budgeting Basics",
         totalScore,
         xpEarned,
-        coinsEarned,
-      )
+        coinsEarned
+      );
 
       if (result.success) {
-        // Update the user's coins in the context
-        await refreshUserData()
-
+        await refreshUserData();
         toast({
-          title: "Simulation Completed!",
+          title: "Simulation Complete!",
           description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
-          variant: "default",
-        })
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+        });
+        setCompleted(true);
+      } else {
+        throw new Error("Failed to save progress");
       }
     } catch (error) {
-      console.error("Error saving simulation progress:", error)
+      console.error("Error saving simulation progress:", error);
       toast({
         title: "Error",
         description: "Failed to save your progress. Please try again.",
         variant: "destructive",
-      })
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleComplete = () => {
-    // In a real app, we would save the results to the user's profile
-    setCompleted(true)
-    saveSimulationResults()
-  }
+    saveSimulationResults();
+  };
 
   return (
     <div className="flex flex-col">
@@ -438,7 +442,13 @@ export default function BudgetingSimulationPage() {
                   <div></div>
                 )}
 
-                <Button onClick={handleNext}>{step < 4 ? "Next" : "Complete Simulation"}</Button>
+                <Button
+                  onClick={handleNext}
+                  disabled={isSubmitting}
+                  className={step === 4 ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" : ""}
+                >
+                  {step < 4 ? "Next" : isSubmitting ? "Saving..." : "Complete Simulation"}
+                </Button>
               </CardFooter>
             </Card>
           </div>

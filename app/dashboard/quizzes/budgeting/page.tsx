@@ -3,20 +3,27 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import {   Card,
+import {
+  Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,} from "@/components/ui/card"
+  CardTitle,
+} from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import {   ArrowLeft,
+import {
+  ArrowLeft,
   CheckCircle,
   XCircle,
   Clock,
   Award,
-  AlertTriangle, } from "lucide-react"
+  AlertTriangle,
+} from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { saveActivityProgress } from "@/actions/user-actions"
+import { toast } from "@/components/ui/use-toast"
 
 // Quiz questions
 const questions = [
@@ -100,7 +107,7 @@ const questions = [
   },
   {
     id: 7,
-    question: "What does ‘living within your means’ mean?",
+    question: "What does 'living within your means' mean?",
     options: [
       { id: "a", text: "Spending more than you earn" },
       { id: "b", text: "Spending only what you earn or less" },
@@ -178,7 +185,7 @@ const questions = [
   },
   {
     id: 13,
-    question: "What does ‘discretionary spending’ refer to?",
+    question: "What does 'discretionary spending' refer to?",
     options: [
       { id: "a", text: "Paying rent" },
       { id: "b", text: "Buying groceries" },
@@ -217,7 +224,7 @@ const questions = [
   },
   {
     id: 16,
-    question: "What does ‘net income’ mean in budgeting?",
+    question: "What does 'net income' mean in budgeting?",
     options: [
       { id: "a", text: "Total income before taxes" },
       { id: "b", text: "Income after taxes and deductions" },
@@ -330,11 +337,11 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "A limit on wants ensures discretionary spending doesn’t interfere with necessities or savings goals.",
+      "A limit on wants ensures discretionary spending doesn't interfere with necessities or savings goals.",
   },
   {
     id: 25,
-    question: "What does ‘budget variance’ mean?",
+    question: "What does 'budget variance' mean?",
     options: [
       { id: "a", text: "The difference between planned and actual spending" },
       { id: "b", text: "A type of savings account" },
@@ -350,8 +357,8 @@ const questions = [
     question: "Which of these is a long-term financial goal?",
     options: [
       { id: "a", text: "Buying a new phone next month" },
-      { id: "b", text: "Saving for a child’s college education" },
-      { id: "c", text: "Paying this month’s rent" },
+      { id: "b", text: "Saving for a child's college education" },
+      { id: "c", text: "Paying this month's rent" },
       { id: "d", text: "Going on a weekend trip" },
     ],
     correctAnswer: "b",
@@ -438,7 +445,7 @@ const questions = [
   },
   {
     id: 33,
-    question: "What does ‘financial discipline’ mean in budgeting?",
+    question: "What does 'financial discipline' mean in budgeting?",
     options: [
       { id: "a", text: "Spending without limits" },
       { id: "b", text: "Sticking to a budget and financial goals" },
@@ -473,7 +480,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "The envelope method divides cash into categories, limiting spending to what’s in each envelope.",
+      "The envelope method divides cash into categories, limiting spending to what's in each envelope.",
   },
   {
     id: 36,
@@ -529,7 +536,7 @@ const questions = [
   },
   {
     id: 40,
-    question: "What does ‘income allocation’ mean in budgeting?",
+    question: "What does 'income allocation' mean in budgeting?",
     options: [
       { id: "a", text: "Spending all income randomly" },
       { id: "b", text: "Dividing income into specific categories" },
@@ -581,7 +588,7 @@ const questions = [
   },
   {
     id: 44,
-    question: "What does ‘financial cushion’ refer to?",
+    question: "What does 'financial cushion' refer to?",
     options: [
       { id: "a", text: "Extra spending money" },
       { id: "b", text: "Savings for emergencies" },
@@ -646,7 +653,7 @@ const questions = [
   },
   {
     id: 49,
-    question: "What does ‘budget surplus’ mean?",
+    question: "What does 'budget surplus' mean?",
     options: [
       { id: "a", text: "Spending more than income" },
       { id: "b", text: "Having money left after expenses" },
@@ -685,7 +692,7 @@ const questions = [
   },
   {
     id: 52,
-    question: "What does ‘financial independence’ mean?",
+    question: "What does 'financial independence' mean?",
     options: [
       { id: "a", text: "Relying on loans" },
       { id: "b", text: "Living without needing financial support" },
@@ -737,7 +744,7 @@ const questions = [
   },
   {
     id: 56,
-    question: "What does ‘budget deficit’ mean?",
+    question: "What does 'budget deficit' mean?",
     options: [
       { id: "a", text: "Having extra money after expenses" },
       { id: "b", text: "Spending more than income" },
@@ -789,7 +796,7 @@ const questions = [
   },
   {
     id: 60,
-    question: "What does ‘opportunity cost’ mean in budgeting?",
+    question: "What does 'opportunity cost' mean in budgeting?",
     options: [
       { id: "a", text: "The cost of saving money" },
       { id: "b", text: "What you give up by choosing one expense over another" },
@@ -841,7 +848,7 @@ const questions = [
   },
   {
     id: 64,
-    question: "What does ‘financial security’ mean?",
+    question: "What does 'financial security' mean?",
     options: [
       { id: "a", text: "Spending all income" },
       { id: "b", text: "Having enough savings and income stability" },
@@ -893,7 +900,7 @@ const questions = [
   },
   {
     id: 68,
-    question: "What does ‘fixed income’ mean in budgeting?",
+    question: "What does 'fixed income' mean in budgeting?",
     options: [
       { id: "a", text: "Income that varies monthly" },
       { id: "b", text: "Consistent income, like a salary" },
@@ -945,7 +952,7 @@ const questions = [
   },
   {
     id: 72,
-    question: "What does ‘cost of living’ mean?",
+    question: "What does 'cost of living' mean?",
     options: [
       { id: "a", text: "The cost of luxury items" },
       { id: "b", text: "Expenses for basic needs in an area" },
@@ -997,7 +1004,7 @@ const questions = [
   },
   {
     id: 76,
-    question: "What does ‘gross income’ mean?",
+    question: "What does 'gross income' mean?",
     options: [
       { id: "a", text: "Income after taxes" },
       { id: "b", text: "Total income before deductions" },
@@ -1049,7 +1056,7 @@ const questions = [
   },
   {
     id: 80,
-    question: "What does ‘financial literacy’ mean?",
+    question: "What does 'financial literacy' mean?",
     options: [
       { id: "a", text: "Spending without planning" },
       { id: "b", text: "Understanding money management" },
@@ -1071,7 +1078,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "Budgeting for pets ensures their care doesn’t strain your finances.",
+      "Budgeting for pets ensures their care doesn't strain your finances.",
   },
   {
     id: 82,
@@ -1101,7 +1108,7 @@ const questions = [
   },
   {
     id: 84,
-    question: "What does ‘debt-to-income ratio’ measure?",
+    question: "What does 'debt-to-income ratio' measure?",
     options: [
       { id: "a", text: "Savings rate" },
       { id: "b", text: "Debt payments relative to income" },
@@ -1153,7 +1160,7 @@ const questions = [
   },
   {
     id: 88,
-    question: "What does ‘disposable income’ mean?",
+    question: "What does 'disposable income' mean?",
     options: [
       { id: "a", text: "Income before taxes" },
       { id: "b", text: "Money left after essentials" },
@@ -1205,7 +1212,7 @@ const questions = [
   },
   {
     id: 92,
-    question: "What does ‘financial stress’ mean?",
+    question: "What does 'financial stress' mean?",
     options: [
       { id: "a", text: "Having extra savings" },
       { id: "b", text: "Worry over money issues" },
@@ -1257,7 +1264,7 @@ const questions = [
   },
   {
     id: 96,
-    question: "What does ‘budget adjustment’ mean?",
+    question: "What does 'budget adjustment' mean?",
     options: [
       { id: "a", text: "Spending without limits" },
       { id: "b", text: "Changing the budget to fit new circumstances" },
@@ -1309,7 +1316,7 @@ const questions = [
   },
   {
     id: 100,
-    question: "What does ‘financial freedom’ mean?",
+    question: "What does 'financial freedom' mean?",
     options: [
       { id: "a", text: "Living paycheck to paycheck" },
       { id: "b", text: "Having control over your finances" },
@@ -1328,6 +1335,7 @@ const getRandomQuestions = (questionsArray, count) => {
 }
 
 export default function BudgetingQuizPage() {
+  const { userData, refreshUserData } = useAuth()
   const [quizState, setQuizState] = useState("start") // start, playing, result
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState({})
@@ -1335,6 +1343,7 @@ export default function BudgetingQuizPage() {
   const [timeLeft, setTimeLeft] = useState(300) // 5 minutes in seconds
   const [timerActive, setTimerActive] = useState(false)
   const [activeQuestions, setActiveQuestions] = useState([]) // Store randomly selected questions
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleStart = () => {
     const randomQuestions = getRandomQuestions(questions, 10) // Select 10 random questions
@@ -1365,9 +1374,51 @@ export default function BudgetingQuizPage() {
       } else {
         setQuizState("result")
         setTimerActive(false)
+        handleQuizEnd()
       }
     }, 2000)
   }
+
+  // Handle Quiz End
+  const handleQuizEnd = async () => {
+    if (!userData || isSubmitting) return;
+
+    const score = calculateScore();
+    const xpEarned = Math.round((score / activeQuestions.length) * 30);
+    const coinsEarned = Math.round((score / activeQuestions.length) * 20);
+
+    try {
+      setIsSubmitting(true);
+      const result = await saveActivityProgress(
+        userData.id,
+        "quiz",
+        "Budgeting Basics",
+        score,
+        xpEarned,
+        coinsEarned
+      );
+
+      if (result.success) {
+        await refreshUserData();
+        toast({
+          title: "Quiz Complete!",
+          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+        });
+      } else {
+        throw new Error("Failed to save progress");
+      }
+    } catch (error) {
+      console.error("Error saving quiz progress:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Calculate score
   const calculateScore = () => {
@@ -1468,8 +1519,12 @@ export default function BudgetingQuizPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={handleStart} className="w-full">
-                Start Quiz
+              <Button
+                onClick={handleStart}
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Loading..." : "Start Quiz"}
               </Button>
             </CardFooter>
           </Card>
@@ -1514,13 +1569,12 @@ export default function BudgetingQuizPage() {
                   return (
                     <button
                       key={option.id}
-                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
-                        isSelected
+                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${isSelected
                           ? isCorrect
                             ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                             : "border-red-500 bg-red-50 dark:bg-red-900/20"
                           : ""
-                      }`}
+                        }`}
                       onClick={() => handleAnswerSelect(activeQuestions[currentQuestion].id, option.id)}
                       disabled={selectedAnswers[activeQuestions[currentQuestion].id] !== undefined}
                     >
@@ -1540,11 +1594,10 @@ export default function BudgetingQuizPage() {
 
               {showExplanation && (
                 <div
-                  className={`rounded-md p-3 ${
-                    selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
+                  className={`rounded-md p-3 ${selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
                       ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                       : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-2">
                     {selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer ? (
@@ -1606,9 +1659,8 @@ export default function BudgetingQuizPage() {
                     return (
                       <div key={question.id} className="flex items-center gap-2">
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                            isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          }`}
+                          className={`flex h-6 w-6 items-center justify-center rounded-full ${isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                         </div>

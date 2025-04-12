@@ -32,6 +32,8 @@ export default function StudentLoanSimulationPage() {
   const [monthlyExpenses, setMonthlyExpenses] = useState(1500)
   const [extraPayment, setExtraPayment] = useState(0)
   const [completed, setCompleted] = useState(false)
+  const [xpEarned, setXpEarned] = useState(0)
+  const [coinsEarned, setCoinsEarned] = useState(0)
 
   const { userData, refreshUserData } = useAuth()
 
@@ -79,6 +81,7 @@ export default function StudentLoanSimulationPage() {
       setStep(step + 1)
     } else {
       setCompleted(true)
+      saveSimulationResults()
     }
   }
 
@@ -96,9 +99,9 @@ export default function StudentLoanSimulationPage() {
     const repaymentScore = extraPayment > 0 ? 30 : 10
     const totalScore = affordabilityScore + repaymentScore
 
-    // Calculate rewards
-    const xpEarned = 40
-    const coinsEarned = 25
+    // Calculate rewards - smaller and more incremental
+    const earnedXp = 5
+    const earnedCoins = 10
 
     try {
       const result = await saveActivityProgress(
@@ -106,17 +109,19 @@ export default function StudentLoanSimulationPage() {
         "simulation",
         "Student Loan Management",
         totalScore,
-        xpEarned,
-        coinsEarned,
+        earnedXp,
+        earnedCoins,
       )
 
       if (result.success) {
+        setXpEarned(earnedXp)
+        setCoinsEarned(earnedCoins)
         await refreshUserData()
 
         toast({
           title: "Simulation Completed!",
-          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
-          variant: "default",
+          description: `You earned ${earnedXp} XP and ${earnedCoins} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
         })
       }
     } catch (error) {
@@ -127,11 +132,6 @@ export default function StudentLoanSimulationPage() {
         variant: "destructive",
       })
     }
-  }
-
-  const handleComplete = () => {
-    setCompleted(true)
-    saveSimulationResults()
   }
 
   return (
@@ -404,9 +404,9 @@ export default function StudentLoanSimulationPage() {
                               $
                               {extraPayment > 0
                                 ? (
-                                    (monthlyPayment + extraPayment) * adjustedLoanTerm * 12 -
-                                    loanAmount
-                                  ).toFixed(2)
+                                  (monthlyPayment + extraPayment) * adjustedLoanTerm * 12 -
+                                  loanAmount
+                                ).toFixed(2)
                                 : totalInterest}
                             </span>
                           </div>
@@ -414,9 +414,8 @@ export default function StudentLoanSimulationPage() {
                             <div className="flex justify-between">
                               <span>Disposable Income:</span>
                               <span
-                                className={`font-medium ${
-                                  disposableIncome >= 0 ? "text-green-600" : "text-red-600"
-                                }`}
+                                className={`font-medium ${disposableIncome >= 0 ? "text-green-600" : "text-red-600"
+                                  }`}
                               >
                                 ${disposableIncome.toFixed(2)}
                               </span>
@@ -479,7 +478,7 @@ export default function StudentLoanSimulationPage() {
                   <div className="text-center">
                     <h3 className="text-xl font-bold">Congratulations!</h3>
                     <p className="text-muted-foreground">
-                      You've earned 40 XP and 25 Coins for completing this simulation
+                      You've earned {xpEarned} XP and {coinsEarned} Coins for completing this simulation
                     </p>
                   </div>
                 </div>
@@ -507,8 +506,8 @@ export default function StudentLoanSimulationPage() {
                         $
                         {extraPayment > 0
                           ? ((monthlyPayment + extraPayment) * adjustedLoanTerm * 12 - loanAmount).toFixed(
-                              2,
-                            )
+                            2,
+                          )
                           : totalInterest}
                       </span>
                     </div>
@@ -516,9 +515,8 @@ export default function StudentLoanSimulationPage() {
                       <div className="flex justify-between">
                         <span>Disposable Income:</span>
                         <span
-                          className={`font-medium ${
-                            disposableIncome >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
+                          className={`font-medium ${disposableIncome >= 0 ? "text-green-600" : "text-red-600"
+                            }`}
                         >
                           ${disposableIncome.toFixed(2)}
                         </span>

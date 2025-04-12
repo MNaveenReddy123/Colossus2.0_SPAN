@@ -21,6 +21,9 @@ import {
   Award,
   AlertTriangle,
 } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { saveActivityProgress } from "@/actions/user-actions";
+import { toast } from "@/components/ui/use-toast";
 
 // Student Loan Management Questions
 const questions = [
@@ -217,7 +220,7 @@ const questions = [
     ],
     correctAnswer: "b",
     explanation:
-      "Parent PLUS Loans allow parents to borrow for their child’s undergraduate education, with federal terms.",
+      "Parent PLUS Loans allow parents to borrow for their child's undergraduate education, with federal terms.",
   },
   {
     id: 16,
@@ -536,7 +539,7 @@ const questions = [
     question: "Why avoid paying only the interest on a loan?",
     options: [
       { id: "a", text: "It reduces the principal" },
-      { id: "b", text: "It doesn’t reduce the principal, extending debt" },
+      { id: "b", text: "It doesn't reduce the principal, extending debt" },
       { id: "c", text: "It cancels the loan" },
       { id: "d", text: "It lowers interest rates" },
     ],
@@ -576,8 +579,8 @@ const questions = [
     options: [
       { id: "a", text: "The interest rate of the loan" },
       { id: "b", text: "The length of time to repay the loan" },
-      { id: "c", text: "The loan’s principal amount" },
-      { id: "d", text: "The loan’s forgiveness amount" },
+      { id: "c", text: "The loan's principal amount" },
+      { id: "d", text: "The loan's forgiveness amount" },
     ],
     correctAnswer: "b",
     explanation:
@@ -637,7 +640,7 @@ const questions = [
   },
   {
     id: 48,
-    question: "What is a credit score’s role in private student loans?",
+    question: "What is a credit score's role in private student loans?",
     options: [
       { id: "a", text: "It has no impact" },
       { id: "b", text: "It affects loan approval and interest rates" },
@@ -677,6 +680,7 @@ const questions = [
 ];
 
 export default function StudentLoanQuiz() {
+  const { userData, refreshUserData } = useAuth();
   const [quizState, setQuizState] = useState("start"); // start, playing, result
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -684,6 +688,7 @@ export default function StudentLoanQuiz() {
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [timerActive, setTimerActive] = useState(false);
   const [randomQuestions, setRandomQuestions] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleStart = () => {
     const randomQuestions = getRandomQuestions(questions, 10);
@@ -714,6 +719,7 @@ export default function StudentLoanQuiz() {
       } else {
         setQuizState("result");
         setTimerActive(false);
+        handleQuizEnd();
       }
     }, 2000);
   };
@@ -764,6 +770,47 @@ export default function StudentLoanQuiz() {
     }
 
     return randomQuestions;
+  };
+
+  // Handle Quiz End
+  const handleQuizEnd = async () => {
+    if (!userData || isSubmitting) return;
+
+    const score = calculateScore();
+    const xpEarned = Math.round((score / randomQuestions.length) * 30);
+    const coinsEarned = Math.round((score / randomQuestions.length) * 20);
+
+    try {
+      setIsSubmitting(true);
+      const result = await saveActivityProgress(
+        userData.id,
+        "quiz",
+        "Student Loan Management",
+        score,
+        xpEarned,
+        coinsEarned
+      );
+
+      if (result.success) {
+        await refreshUserData();
+        toast({
+          title: "Quiz Complete!",
+          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+        });
+      } else {
+        throw new Error("Failed to save progress");
+      }
+    } catch (error) {
+      console.error("Error saving quiz progress:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -894,13 +941,12 @@ export default function StudentLoanQuiz() {
                   return (
                     <button
                       key={option.id}
-                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
-                        isSelected
+                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${isSelected
                           ? isCorrect
                             ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                             : "border-red-500 bg-red-50 dark:bg-red-900/20"
                           : ""
-                      }`}
+                        }`}
                       onClick={() =>
                         handleAnswerSelect(randomQuestions[currentQuestion].id, option.id)
                       }
@@ -922,16 +968,15 @@ export default function StudentLoanQuiz() {
 
               {showExplanation && (
                 <div
-                  className={`rounded-md p-3 ${
-                    selectedAnswers[randomQuestions[currentQuestion].id] ===
-                    randomQuestions[currentQuestion].correctAnswer
+                  className={`rounded-md p-3 ${selectedAnswers[randomQuestions[currentQuestion].id] ===
+                      randomQuestions[currentQuestion].correctAnswer
                       ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                       : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-2">
                     {selectedAnswers[randomQuestions[currentQuestion].id] ===
-                    randomQuestions[currentQuestion].correctAnswer ? (
+                      randomQuestions[currentQuestion].correctAnswer ? (
                       <CheckCircle className="h-5 w-5 shrink-0" />
                     ) : (
                       <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -939,7 +984,7 @@ export default function StudentLoanQuiz() {
                     <div>
                       <p className="text-sm font-medium">
                         {selectedAnswers[randomQuestions[currentQuestion].id] ===
-                        randomQuestions[currentQuestion].correctAnswer
+                          randomQuestions[currentQuestion].correctAnswer
                           ? "Correct!"
                           : "Incorrect"}
                       </p>
@@ -973,8 +1018,8 @@ export default function StudentLoanQuiz() {
                     {calculateScore() >= 8
                       ? "Excellent! You have a strong understanding of student loan management."
                       : calculateScore() >= 6
-                      ? "Good job! You understand the basics of student loans."
-                      : "You're on your way to mastering student loan management."}
+                        ? "Good job! You understand the basics of student loans."
+                        : "You're on your way to mastering student loan management."}
                   </p>
                   <p className="mt-2 text-muted-foreground">
                     You've earned{" "}
@@ -994,9 +1039,8 @@ export default function StudentLoanQuiz() {
                     return (
                       <div key={question.id} className="flex items-center gap-2">
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                            isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          }`}
+                          className={`flex h-6 w-6 items-center justify-center rounded-full ${isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {isCorrect ? (
                             <CheckCircle className="h-4 w-4" />

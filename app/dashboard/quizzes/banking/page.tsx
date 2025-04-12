@@ -3,20 +3,27 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import {   Card,
+import {
+  Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,} from "@/components/ui/card"
+  CardTitle,
+} from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import {   ArrowLeft,
+import {
+  ArrowLeft,
   CheckCircle,
   XCircle,
   Clock,
   Award,
-  AlertTriangle, } from "lucide-react"
+  AlertTriangle,
+} from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { saveActivityProgress } from "@/actions/user-actions"
+import { toast } from "@/components/ui/use-toast"
 
 // Quiz questions
 const questions = [
@@ -54,7 +61,7 @@ const questions = [
       { id: "d", text: "To issue credit cards" },
     ],
     correctAnswer: "b",
-    explanation: "Central banks, like the Federal Reserve, regulate a nation’s money supply and economic stability."
+    explanation: "Central banks, like the Federal Reserve, regulate a nation's money supply and economic stability."
   },
   {
     id: 4,
@@ -121,7 +128,7 @@ const questions = [
     question: "What is the purpose of a credit score?",
     options: [
       { id: "a", text: "To track bank profits" },
-      { id: "b", text: "To assess a borrower’s creditworthiness" },
+      { id: "b", text: "To assess a borrower's creditworthiness" },
       { id: "c", text: "To determine tax rates" },
       { id: "d", text: "To set investment returns" },
     ],
@@ -312,13 +319,13 @@ const questions = [
     id: 25,
     question: "What is the purpose of a bank stress test?",
     options: [
-      { id: "a", text: "To evaluate a bank’s ability to withstand economic downturns" },
+      { id: "a", text: "To evaluate a bank's ability to withstand economic downturns" },
       { id: "b", text: "To increase customer deposits" },
       { id: "c", text: "To set new interest rates" },
       { id: "d", text: "To issue more loans" },
     ],
     correctAnswer: "a",
-    explanation: "Stress tests assess a bank’s resilience against financial crises or adverse conditions."
+    explanation: "Stress tests assess a bank's resilience against financial crises or adverse conditions."
   },
   {
     id: 26,
@@ -330,7 +337,7 @@ const questions = [
       { id: "d", text: "A tax deduction" },
     ],
     correctAnswer: "b",
-    explanation: "Collateral reduces lender risk by providing an asset that can be seized if the loan isn’t repaid."
+    explanation: "Collateral reduces lender risk by providing an asset that can be seized if the loan isn't repaid."
   },
   {
     id: 27,
@@ -442,7 +449,7 @@ const questions = [
   },
   {
     id: 36,
-    question: "What is the main purpose of a bank’s capital adequacy ratio?",
+    question: "What is the main purpose of a bank's capital adequacy ratio?",
     options: [
       { id: "a", text: "To measure customer deposits" },
       { id: "b", text: "To ensure the bank can absorb losses and remain solvent" },
@@ -450,7 +457,7 @@ const questions = [
       { id: "d", text: "To increase loan availability" },
     ],
     correctAnswer: "b",
-    explanation: "The capital adequacy ratio assesses a bank’s financial strength to handle potential losses."
+    explanation: "The capital adequacy ratio assesses a bank's financial strength to handle potential losses."
   },
   {
     id: 37,
@@ -577,12 +584,12 @@ const questions = [
     question: "What does 'tier 1 capital' refer to in banking?",
     options: [
       { id: "a", text: "Customer deposits" },
-      { id: "b", text: "A bank’s core capital, like equity and reserves" },
+      { id: "b", text: "A bank's core capital, like equity and reserves" },
       { id: "c", text: "Short-term loans" },
       { id: "d", text: "Government bonds" },
     ],
     correctAnswer: "b",
-    explanation: "Tier 1 capital is a bank’s primary funding source to absorb losses without ceasing operations."
+    explanation: "Tier 1 capital is a bank's primary funding source to absorb losses without ceasing operations."
   },
   {
     id: 48,
@@ -594,7 +601,7 @@ const questions = [
       { id: "d", text: "A tax refund" },
     ],
     correctAnswer: "b",
-    explanation: "Payday loans provide quick cash with high interest, repayable by the borrower’s next payday."
+    explanation: "Payday loans provide quick cash with high interest, repayable by the borrower's next payday."
   },
   {
     id: 49,
@@ -622,7 +629,7 @@ const questions = [
   },
   {
     id: 51,
-    question: "What is a 'traveler’s check'?",
+    question: "What is a 'traveler's check'?",
     options: [
       { id: "a", text: "A prepaid payment method for travel" },
       { id: "b", text: "A type of loan" },
@@ -630,7 +637,7 @@ const questions = [
       { id: "d", text: "A credit card" },
     ],
     correctAnswer: "a",
-    explanation: "Traveler’s checks are secure, prepaid instruments replaceable if lost, used for travel."
+    explanation: "Traveler's checks are secure, prepaid instruments replaceable if lost, used for travel."
   },
   {
     id: 52,
@@ -646,7 +653,7 @@ const questions = [
   },
   {
     id: 53,
-    question: "What is the purpose of a bank’s loan-to-deposit ratio?",
+    question: "What is the purpose of a bank's loan-to-deposit ratio?",
     options: [
       { id: "a", text: "To measure how much it lends compared to deposits" },
       { id: "b", text: "To set tax rates" },
@@ -757,12 +764,12 @@ const questions = [
     question: "What does 'leverage ratio' measure in banking?",
     options: [
       { id: "a", text: "The ratio of loans to deposits" },
-      { id: "b", text: "The ratio of a bank’s capital to its total assets" },
+      { id: "b", text: "The ratio of a bank's capital to its total assets" },
       { id: "c", text: "The interest rate on savings" },
       { id: "d", text: "The tax rate on profits" },
     ],
     correctAnswer: "b",
-    explanation: "The leverage ratio evaluates a bank’s financial stability by comparing capital to assets."
+    explanation: "The leverage ratio evaluates a bank's financial stability by comparing capital to assets."
   },
   {
     id: 63,
@@ -802,7 +809,7 @@ const questions = [
   },
   {
     id: 66,
-    question: "What is the purpose of a bank’s net interest margin?",
+    question: "What is the purpose of a bank's net interest margin?",
     options: [
       { id: "a", text: "To measure the difference between interest income and expenses" },
       { id: "b", text: "To set customer fees" },
@@ -1008,7 +1015,7 @@ const questions = [
     id: 83,
     question: "What is a 'trust account'?",
     options: [
-      { id: "a", text: "An account managed by one party for another’s benefit" },
+      { id: "a", text: "An account managed by one party for another's benefit" },
       { id: "b", text: "A high-risk investment" },
       { id: "c", text: "A loan account" },
       { id: "d", text: "A tax collection account" },
@@ -1030,7 +1037,7 @@ const questions = [
   },
   {
     id: 85,
-    question: "What is a 'cashier’s check'?",
+    question: "What is a 'cashier's check'?",
     options: [
       { id: "a", text: "A personal check" },
       { id: "b", text: "A check guaranteed by a bank" },
@@ -1038,7 +1045,7 @@ const questions = [
       { id: "d", text: "A savings certificate" },
     ],
     correctAnswer: "b",
-    explanation: "A cashier’s check is drawn on a bank’s funds, ensuring payment security."
+    explanation: "A cashier's check is drawn on a bank's funds, ensuring payment security."
   },
   {
     id: 86,
@@ -1086,7 +1093,7 @@ const questions = [
       { id: "d", text: "A tax refund" },
     ],
     correctAnswer: "b",
-    explanation: "Negative amortization occurs when payments don’t cover interest, increasing the loan principal."
+    explanation: "Negative amortization occurs when payments don't cover interest, increasing the loan principal."
   },
   {
     id: 90,
@@ -1104,13 +1111,13 @@ const questions = [
     id: 91,
     question: "What is a 'home equity loan'?",
     options: [
-      { id: "a", text: "A loan based on the value of a home’s equity" },
+      { id: "a", text: "A loan based on the value of a home's equity" },
       { id: "b", text: "A loan for buying stocks" },
       { id: "c", text: "A savings account" },
       { id: "d", text: "A tax-free loan" },
     ],
     correctAnswer: "a",
-    explanation: "A home equity loan uses the homeowner’s equity as collateral for borrowing."
+    explanation: "A home equity loan uses the homeowner's equity as collateral for borrowing."
   },
   {
     id: 92,
@@ -1227,6 +1234,7 @@ const getRandomQuestions = (questionsArray, count) => {
 }
 
 export default function BankingQuizPage() {
+  const { userData, refreshUserData } = useAuth()
   const [quizState, setQuizState] = useState("start") // start, playing, result
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState({})
@@ -1234,6 +1242,7 @@ export default function BankingQuizPage() {
   const [timeLeft, setTimeLeft] = useState(300) // 5 minutes in seconds
   const [timerActive, setTimerActive] = useState(false)
   const [activeQuestions, setActiveQuestions] = useState([]) // Store randomly selected questions
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleStart = () => {
     const randomQuestions = getRandomQuestions(questions, 10) // Select 10 random questions
@@ -1264,9 +1273,49 @@ export default function BankingQuizPage() {
       } else {
         setQuizState("result")
         setTimerActive(false)
+        handleQuizEnd()
       }
     }, 2000)
   }
+
+  // Handle Quiz End
+  const handleQuizEnd = async () => {
+    if (!userData || isSubmitting) return;
+
+    const score = calculateScore();
+    const xpEarned = Math.round((score / activeQuestions.length) * 30);
+    const coinsEarned = Math.round((score / activeQuestions.length) * 20);
+
+    try {
+      setIsSubmitting(true);
+      const result = await saveActivityProgress(
+        userData.id,
+        "quiz",
+        "Banking Basics",
+        score,
+        xpEarned,
+        coinsEarned
+      );
+
+      if (result.success) {
+        await refreshUserData();
+        toast({
+          title: "Quiz Complete!",
+          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+        });
+      }
+    } catch (error) {
+      console.error("Error saving quiz progress:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Calculate score
   const calculateScore = () => {
@@ -1417,13 +1466,12 @@ export default function BankingQuizPage() {
                   return (
                     <button
                       key={option.id}
-                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
-                        isSelected
+                      className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${isSelected
                           ? isCorrect
                             ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                             : "border-red-500 bg-red-50 dark:bg-red-900/20"
                           : ""
-                      }`}
+                        }`}
                       onClick={() => handleAnswerSelect(activeQuestions[currentQuestion].id, option.id)}
                       disabled={selectedAnswers[activeQuestions[currentQuestion].id] !== undefined}
                     >
@@ -1443,11 +1491,10 @@ export default function BankingQuizPage() {
 
               {showExplanation && (
                 <div
-                  className={`rounded-md p-3 ${
-                    selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
+                  className={`rounded-md p-3 ${selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer
                       ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                       : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-2">
                     {selectedAnswers[activeQuestions[currentQuestion].id] === activeQuestions[currentQuestion].correctAnswer ? (
@@ -1509,9 +1556,8 @@ export default function BankingQuizPage() {
                     return (
                       <div key={question.id} className="flex items-center gap-2">
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                            isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          }`}
+                          className={`flex h-6 w-6 items-center justify-center rounded-full ${isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {isCorrect ? (
                             <CheckCircle className="h-4 w-4" />

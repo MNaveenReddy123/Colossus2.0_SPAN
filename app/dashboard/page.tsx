@@ -1,12 +1,14 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react"
+import Suggestions from "@/components/ui/suggestions"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   BookOpen,
   Gamepad2,
@@ -18,324 +20,1189 @@ import {
   Award,
   Loader2,
   AlertCircle,
-} from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
-import { getUserActivities } from "@/actions/user-actions";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import Suggestions from "@/components/ui/suggestions";
-import { motion } from "framer-motion";
+  BarChart3,
+  PieChart,
+  LineChart,
+  Activity,
+  Target,
+  Star,
+  ArrowUpRight,
+  ArrowDownRight,
+  HelpCircle,
+  RefreshCw,
+  Home,
+  Settings,
+  User,
+  ChevronRight,
+  Sparkles,
+  Zap,
+  Flame,
+  Gift,
+  Crown,
+  Lightbulb,
+} from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { useCachedUserData } from "@/hooks/use-cached-user-data"
 
-export default function DashboardPage() {
-  const { userData, refreshUserData } = useAuth();
-  interface Activity {
-    id: string;
-    activity_type: "quiz" | "game" | "simulation";
-    activity_name: string;
-    score: number;
-    xp_earned: number;
-    coins_earned: number;
-    created_at: string;
-  }
+// Import the custom theme
+import "@/styles/dashboard-theme.css"
 
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Activity type definition
+type ActivityType = {
+  id: number
+  user_id: string
+  activity_type: "quiz" | "game" | "simulation"
+  activity_name: string
+  score: number
+  xp_earned: number
+  coins_earned: number
+  created_at: string
+}
 
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-  };
-
-  const staggerChildren = {
-    visible: { transition: { staggerChildren: 0.2 } },
-  };
-
-  const cardHover = {
-    hover: { scale: 1.03, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", transition: { duration: 0.3 } },
-  };
+// Animated progress bar component
+const AnimatedProgressBar = ({ value = 0, className = "" }: { value: number; className?: string }) => {
+  const [width, setWidth] = useState(0)
 
   useEffect(() => {
-    const fetchActivities = async () => {
-      if (userData) {
-        setLoading(true);
-        setError(null);
-        try {
-          const result = await getUserActivities(userData.id);
-          if (result.success) {
-            setActivities(result.data || []);
-          } else {
-            console.error("Error fetching activities:", result.error);
-            setError("Could not load activity data. Using default values.");
-          }
-        } catch (error) {
-          console.error("Error fetching activities:", error);
-          setError("An unexpected error occurred. Using default values.");
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
+    // Delay to allow animation
+    const timer = setTimeout(() => {
+      setWidth(value)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [value])
 
-    fetchActivities();
-  }, [userData]);
+  return (
+    <div className={`progress-bar ${className}`}>
+      <div className="progress-bar-fill" style={{ width: `${width}%` }} />
+    </div>
+  )
+}
+
+// Activity performance chart
+const ActivityPerformanceChart = ({ activities }: { activities: ActivityType[] }) => {
+  if (!activities || activities.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gradient-border p-4">
+        <LineChart className="h-16 w-16 text-muted-foreground/50" />
+        <p className="text-muted-foreground mt-4">Complete activities to see your performance trends</p>
+      </div>
+    )
+  }
+
+  // Get the last 5 activities in chronological order
+  const recentActivities = [...activities]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .slice(-5)
+
+  return (
+    <div className="h-64 gradient-border p-4 chart-container">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-sm font-medium">Performance Trend</h3>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6">
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="w-60">This chart shows your score performance across your most recent activities.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      <div className="h-48 flex items-end space-x-2">
+        {recentActivities.map((activity, index) => {
+          // Calculate height percentage (max 100%)
+          const heightPercentage = Math.min(100, (activity.score / 100) * 100)
+
+          return (
+            <div key={activity.id} className="flex flex-col items-center flex-1">
+              <div className="w-full flex justify-center mb-1">
+                <span className="text-xs">{activity.score}%</span>
+              </div>
+              <div
+                className="w-full rounded-t-sm glow-effect"
+                style={{
+                  height: `${heightPercentage}%`,
+                  background: `linear-gradient(180deg, 
+                    hsl(var(--dashboard-primary)) 0%, 
+                    hsl(var(--dashboard-secondary)) 100%)`,
+                }}
+              ></div>
+              <div className="w-full text-center mt-2">
+                <span className="text-xs text-muted-foreground truncate block" style={{ maxWidth: "100%" }}>
+                  {activity.activity_name.length > 10
+                    ? activity.activity_name.substring(0, 10) + "..."
+                    : activity.activity_name}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Donut chart for activity type distribution
+const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
+  if (!activities || activities.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gradient-border p-4">
+        <PieChart className="h-16 w-16 text-muted-foreground/50" />
+        <p className="text-muted-foreground mt-4">Complete activities to see your distribution</p>
+      </div>
+    )
+  }
+
+  // Count activities by type
+  const counts = {
+    quiz: activities.filter((a) => a.activity_type === "quiz").length,
+    game: activities.filter((a) => a.activity_type === "game").length,
+    simulation: activities.filter((a) => a.activity_type === "simulation").length,
+  }
+
+  // Calculate percentages and angles for the donut chart
+  const total = activities.length
+  const quizPercentage = Math.round((counts.quiz / total) * 100) || 0
+  const gamePercentage = Math.round((counts.game / total) * 100) || 0
+  const simulationPercentage = Math.round((counts.simulation / total) * 100) || 0
+
+  // Calculate the stroke dasharray and dashoffset for each segment
+  const circumference = 2 * Math.PI * 40 // radius is 40
+
+  return (
+    <div className="h-64 gradient-border p-4 chart-container">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-sm font-medium">Activity Distribution</h3>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6">
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="w-60">This chart shows the distribution of your activities by type.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      <div className="flex items-center justify-center h-40">
+        <div className="relative">
+          <svg width="120" height="120" viewBox="0 0 100 100">
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="transparent"
+              stroke="hsl(326, 100%, 74%)" // Secondary color
+              strokeWidth="15"
+              strokeDasharray={circumference}
+              strokeDashoffset={(1 - counts.quiz / total) * circumference}
+              transform="rotate(-90 50 50)"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="transparent"
+              stroke="hsl(263, 90%, 51%)" // Primary color
+              strokeWidth="15"
+              strokeDasharray={circumference}
+              strokeDashoffset={(1 - counts.game / total) * circumference}
+              transform={`rotate(${(counts.quiz / total) * 360 - 90} 50 50)`}
+              style={{
+                transformOrigin: "center",
+                strokeDashoffset: (1 - counts.game / total) * circumference,
+                transform: `rotate(${(counts.quiz / total) * 360 - 90}deg)`,
+                transformBox: "fill-box",
+              }}
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="transparent"
+              stroke="hsl(191, 97%, 77%)" // Accent color
+              strokeWidth="15"
+              strokeDasharray={circumference}
+              strokeDashoffset={(1 - counts.simulation / total) * circumference}
+              transform={`rotate(${(counts.quiz / total + counts.game / total) * 360 - 90} 50 50)`}
+              style={{
+                transformOrigin: "center",
+                strokeDashoffset: (1 - counts.simulation / total) * circumference,
+                transform: `rotate(${(counts.quiz / total + counts.game / total) * 360 - 90}deg)`,
+                transformBox: "fill-box",
+              }}
+            />
+            <circle cx="50" cy="50" r="25" fill="hsl(var(--dashboard-card))" />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-lg font-bold">{total}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-around mt-2">
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-[hsl(326,100%,74%)] mr-1"></div>
+          <span className="text-xs">Quiz ({quizPercentage}%)</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-[hsl(263,90%,51%)] mr-1"></div>
+          <span className="text-xs">Game ({gamePercentage}%)</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-[hsl(191,97%,77%)] mr-1"></div>
+          <span className="text-xs">Sim ({simulationPercentage}%)</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// XP and Coins trend chart
+const ResourcesTrendChart = ({ activities }: { activities: ActivityType[] }) => {
+  if (!activities || activities.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gradient-border p-4">
+        <BarChart3 className="h-16 w-16 text-muted-foreground/50" />
+        <p className="text-muted-foreground mt-4">Complete activities to see your resources trend</p>
+      </div>
+    )
+  }
+
+  // Get the last 5 activities in chronological order
+  const recentActivities = [...activities]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .slice(-5)
+
+  // Find max values to normalize the chart
+  const maxXp = Math.max(...recentActivities.map((a) => a.xp_earned))
+  const maxCoins = Math.max(...recentActivities.map((a) => a.coins_earned))
+  const maxValue = Math.max(maxXp, maxCoins)
+
+  return (
+    <div className="h-64 gradient-border p-4 chart-container">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-sm font-medium">XP & Coins Earned</h3>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6">
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="w-60">This chart shows XP and Coins earned from your most recent activities.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      <div className="h-48 flex items-end space-x-2">
+        {recentActivities.map((activity, index) => {
+          // Calculate height percentages
+          const xpHeightPercentage = maxValue ? (activity.xp_earned / maxValue) * 100 : 0
+          const coinsHeightPercentage = maxValue ? (activity.coins_earned / maxValue) * 100 : 0
+
+          return (
+            <div key={activity.id} className="flex-1 flex space-x-1">
+              <div className="flex-1 flex flex-col items-center">
+                <div className="w-full flex justify-center mb-1">
+                  <span className="text-xs">{activity.xp_earned}</span>
+                </div>
+                <div
+                  className="w-full rounded-t-sm glow-effect"
+                  style={{
+                    height: `${xpHeightPercentage}%`,
+                    background: "hsl(263, 90%, 51%)", // Primary color
+                  }}
+                ></div>
+              </div>
+
+              <div className="flex-1 flex flex-col items-center">
+                <div className="w-full flex justify-center mb-1">
+                  <span className="text-xs">{activity.coins_earned}</span>
+                </div>
+                <div
+                  className="w-full rounded-t-sm glow-effect"
+                  style={{
+                    height: `${coinsHeightPercentage}%`,
+                    background: "hsl(38, 92%, 50%)", // Warning color
+                  }}
+                ></div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="flex justify-around mt-2">
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-[hsl(263,90%,51%)] mr-1"></div>
+          <span className="text-xs">XP</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-[hsl(38,92%,50%)] mr-1"></div>
+          <span className="text-xs">Coins</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Heatmap for activity frequency
+const ActivityHeatmap = ({ activities }: { activities: ActivityType[] }) => {
+  if (!activities || activities.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-32 gradient-border p-4">
+        <Calendar className="h-12 w-12 text-muted-foreground/50" />
+        <p className="text-muted-foreground mt-2 text-sm">Complete activities to see your activity calendar</p>
+      </div>
+    )
+  }
+
+  // Create a map of dates to activity counts
+  const activityMap = new Map<string, number>()
+
+  // Get the last 7 days
+  const today = new Date()
+  const days = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(today.getDate() - i)
+    const dateStr = date.toISOString().split("T")[0]
+    days.push({
+      date: dateStr,
+      display: date.toLocaleDateString(undefined, { weekday: "short" }),
+    })
+    activityMap.set(dateStr, 0)
+  }
+
+  // Count activities per day
+  activities.forEach((activity) => {
+    const dateStr = new Date(activity.created_at).toISOString().split("T")[0]
+    if (activityMap.has(dateStr)) {
+      activityMap.set(dateStr, (activityMap.get(dateStr) || 0) + 1)
+    }
+  })
+
+  // Find max for normalization
+  const maxActivities = Math.max(...Array.from(activityMap.values()), 1)
+
+  return (
+    <div className="h-32 gradient-border p-4">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-sm font-medium">Activity Calendar</h3>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6">
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="w-60">This shows your activity frequency over the past 7 days.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      <div className="flex justify-between h-16">
+        {days.map((day) => {
+          const count = activityMap.get(day.date) || 0
+          const intensity = count / maxActivities
+
+          return (
+            <div key={day.date} className="flex flex-col items-center">
+              <div
+                className="w-8 h-8 rounded-sm flex items-center justify-center glow-effect"
+                style={{
+                  background:
+                    count > 0
+                      ? `linear-gradient(135deg, 
+                        hsla(var(--dashboard-primary), ${0.4 + intensity * 0.6}), 
+                        hsla(var(--dashboard-secondary), ${0.4 + intensity * 0.6}))`
+                      : "hsla(var(--dashboard-muted), 0.3)",
+                }}
+              >
+                <span className="text-xs font-medium">{count}</span>
+              </div>
+              <span className="text-xs mt-1 text-muted-foreground">{day.display}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Achievement progress component
+const AchievementProgressCard = ({ userData, activities }: { userData: any; activities: ActivityType[] }) => {
+  // Define achievements and their criteria
+  const achievements = [
+    {
+      id: "first_login",
+      name: "First Login",
+      description: "Log in to the platform for the first time",
+      icon: <Award className="h-4 w-4" />,
+      progress: 100, // Always completed
+      completed: true,
+    },
+    {
+      id: "level_up",
+      name: "Level Up",
+      description: "Reach level 2 or higher",
+      icon: <TrendingUp className="h-4 w-4" />,
+      progress: Math.min(100, (userData.xp / 100) * 100),
+      completed: userData.xp >= 100,
+    },
+    {
+      id: "quiz_master",
+      name: "Quiz Master",
+      description: "Complete 5 quizzes",
+      icon: <BookOpen className="h-4 w-4" />,
+      progress: Math.min(100, (activities.filter((a) => a.activity_type === "quiz").length / 5) * 100),
+      completed: activities.filter((a) => a.activity_type === "quiz").length >= 5,
+    },
+    {
+      id: "game_player",
+      name: "Game Player",
+      description: "Play 3 different games",
+      icon: <Gamepad2 className="h-4 w-4" />,
+      // Count unique game names
+      progress: Math.min(
+        100,
+        (new Set(activities.filter((a) => a.activity_type === "game").map((a) => a.activity_name)).size / 3) * 100,
+      ),
+      completed: new Set(activities.filter((a) => a.activity_type === "game").map((a) => a.activity_name)).size >= 3,
+    },
+    {
+      id: "saver",
+      name: "Saver",
+      description: "Accumulate 100 coins",
+      icon: <Wallet className="h-4 w-4" />,
+      progress: Math.min(100, (userData.coins / 100) * 100),
+      completed: userData.coins >= 100,
+    },
+    {
+      id: "perfect_score",
+      name: "Perfect Score",
+      description: "Get a 100% score on any activity",
+      icon: <Target className="h-4 w-4" />,
+      progress: activities.some((a) => a.score === 100) ? 100 : 0,
+      completed: activities.some((a) => a.score === 100),
+    },
+  ]
+
+  return (
+    <div className="gradient-card p-4 rounded-lg">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold gradient-heading">Achievement Progress</h3>
+        <Badge className="bg-[hsl(var(--dashboard-secondary))] text-white">
+          {achievements.filter((a) => a.completed).length}/{achievements.length}
+        </Badge>
+      </div>
+      <div className="space-y-4">
+        {achievements.map((achievement) => (
+          <div key={achievement.id} className="space-y-1">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`p-1 rounded-full ${achievement.completed ? "bg-[hsl(var(--dashboard-secondary))]" : "bg-muted"}`}
+                >
+                  {achievement.icon}
+                </div>
+                <span className="text-sm font-medium">{achievement.name}</span>
+              </div>
+              {achievement.completed && (
+                <Badge variant="outline" className="bg-[hsla(var(--dashboard-secondary),0.2)] badge-glow">
+                  <Star className="h-3 w-3 mr-1 text-[hsl(var(--dashboard-secondary))]" />
+                  Completed
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <AnimatedProgressBar value={achievement.progress} />
+              <span className="text-xs text-muted-foreground">{Math.round(achievement.progress)}%</span>
+            </div>
+            <p className="text-xs text-muted-foreground">{achievement.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// User stats card
+const UserStatsCard = ({ userData, activities }: { userData: any; activities: ActivityType[] }) => {
+  // Calculate stats
+  const totalActivities = activities.length
+  const totalXpEarned = activities.reduce((sum, a) => sum + a.xp_earned, 0)
+  const totalCoinsEarned = activities.reduce((sum, a) => sum + a.coins_earned, 0)
+  const avgScore =
+    activities.length > 0 ? Math.round(activities.reduce((sum, a) => sum + a.score, 0) / activities.length) : 0
+
+  // Calculate activity type counts
+  const quizCount = activities.filter((a) => a.activity_type === "quiz").length
+  const gameCount = activities.filter((a) => a.activity_type === "game").length
+  const simulationCount = activities.filter((a) => a.activity_type === "simulation").length
+
+  // Calculate trends (comparing last activity to average)
+  let scoreTrend = 0
+  let xpTrend = 0
+  let coinsTrend = 0
+
+  if (activities.length > 0) {
+    const lastActivity = activities[0] // Most recent activity
+    const avgScoreExcludingLast =
+      activities.length > 1
+        ? (activities.reduce((sum, a) => sum + a.score, 0) - lastActivity.score) / (activities.length - 1)
+        : lastActivity.score
+    const avgXpExcludingLast =
+      activities.length > 1
+        ? (activities.reduce((sum, a) => sum + a.xp_earned, 0) - lastActivity.xp_earned) / (activities.length - 1)
+        : lastActivity.xp_earned
+    const avgCoinsExcludingLast =
+      activities.length > 1
+        ? (activities.reduce((sum, a) => sum + a.coins_earned, 0) - lastActivity.coins_earned) / (activities.length - 1)
+        : lastActivity.coins_earned
+
+    scoreTrend = lastActivity.score - avgScoreExcludingLast
+    xpTrend = lastActivity.xp_earned - avgXpExcludingLast
+    coinsTrend = lastActivity.coins_earned - avgCoinsExcludingLast
+  }
+
+  return (
+    <div className="gradient-card p-4 rounded-lg">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold gradient-heading">User Statistics</h3>
+        <Badge className="bg-[hsl(var(--dashboard-primary))] text-white">
+          Level {Math.floor(userData.xp / 100) + 1}
+        </Badge>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Total Activities</span>
+            <span className="font-medium">{totalActivities}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Average Score</span>
+            <div className="flex items-center">
+              <span className="font-medium">{avgScore}%</span>
+              {scoreTrend !== 0 && (
+                <span
+                  className={`ml-1 text-xs ${scoreTrend > 0 ? "text-[hsl(var(--dashboard-success))]" : "text-[hsl(var(--dashboard-danger))]"}`}
+                >
+                  {scoreTrend > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Total XP Earned</span>
+            <div className="flex items-center">
+              <span className="font-medium">{totalXpEarned}</span>
+              {xpTrend !== 0 && (
+                <span
+                  className={`ml-1 text-xs ${xpTrend > 0 ? "text-[hsl(var(--dashboard-success))]" : "text-[hsl(var(--dashboard-danger))]"}`}
+                >
+                  {xpTrend > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Total Coins Earned</span>
+            <div className="flex items-center">
+              <span className="font-medium">{totalCoinsEarned}</span>
+              {coinsTrend !== 0 && (
+                <span
+                  className={`ml-1 text-xs ${coinsTrend > 0 ? "text-[hsl(var(--dashboard-success))]" : "text-[hsl(var(--dashboard-danger))]"}`}
+                >
+                  {coinsTrend > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Quizzes Completed</span>
+            <span className="font-medium">{quizCount}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Games Played</span>
+            <span className="font-medium">{gameCount}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Simulations Run</span>
+            <span className="font-medium">{simulationCount}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Recent activities component
+const RecentActivitiesCard = ({ activities }: { activities: ActivityType[] }) => {
+  if (!activities || activities.length === 0) {
+    return (
+      <div className="gradient-card p-4 rounded-lg">
+        <h3 className="text-lg font-bold gradient-heading mb-4">Recent Activities</h3>
+        <div className="flex flex-col items-center justify-center py-8">
+          <Activity className="h-12 w-12 text-muted-foreground/50" />
+          <p className="text-muted-foreground mt-4">No activities yet. Start your learning journey!</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="gradient-card p-4 rounded-lg">
+      <h3 className="text-lg font-bold gradient-heading mb-4">Recent Activities</h3>
+      <div className="space-y-3">
+        {activities.slice(0, 5).map((activity) => (
+          <div
+            key={activity.id}
+            className="flex items-center p-3 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect"
+          >
+            <div
+              className="mr-4 rounded-full p-2"
+              style={{
+                background:
+                  activity.activity_type === "quiz"
+                    ? "hsla(var(--dashboard-secondary), 0.2)"
+                    : activity.activity_type === "game"
+                      ? "hsla(var(--dashboard-primary), 0.2)"
+                      : "hsla(var(--dashboard-accent), 0.2)",
+              }}
+            >
+              {activity.activity_type === "quiz" && (
+                <BookOpen className="h-4 w-4 text-[hsl(var(--dashboard-secondary))]" />
+              )}
+              {activity.activity_type === "game" && (
+                <Gamepad2 className="h-4 w-4 text-[hsl(var(--dashboard-primary))]" />
+              )}
+              {activity.activity_type === "simulation" && (
+                <Activity className="h-4 w-4 text-[hsl(var(--dashboard-accent))]" />
+              )}
+            </div>
+            <div className="flex-1 space-y-1">
+              <div className="flex justify-between">
+                <p className="text-sm font-medium leading-none">{activity.activity_name}</p>
+                <Badge
+                  className={
+                    activity.activity_type === "quiz"
+                      ? "bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]"
+                      : activity.activity_type === "game"
+                        ? "bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]"
+                        : "bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]"
+                  }
+                >
+                  {activity.activity_type.charAt(0).toUpperCase() + activity.activity_type.slice(1)}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Score: {activity.score}% • +{activity.xp_earned} XP • +{activity.coins_earned} Coins
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(activity.created_at).toLocaleString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4">
+        <Link href="/dashboard/activities">
+          <Button
+            variant="outline"
+            className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-primary),0.1)]"
+          >
+            View All Activities
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// Recommendations component
+const RecommendationsCard = ({ userData, activities }: { userData: any; activities: ActivityType[] }) => {
+  // Generate personalized recommendations based on user data
+  const recommendations = []
+
+  // Level-based recommendations
+  const userLevel = Math.floor(userData.xp / 100) + 1
+
+  if (userLevel < 2) {
+    recommendations.push({
+      title: "Budgeting Basics",
+      type: "quiz",
+      description: "Perfect for beginners to learn financial fundamentals",
+      icon: <BookOpen className="h-4 w-4" />,
+      link: "/dashboard/quizzes/budgeting",
+      badge: "Beginner",
+    })
+  } else if (userLevel < 4) {
+    recommendations.push({
+      title: "Credit Score Adventure",
+      type: "game",
+      description: "Learn about credit scores in a fun interactive way",
+      icon: <Gamepad2 className="h-4 w-4" />,
+      link: "/dashboard/games/credit-score",
+      badge: "Intermediate",
+    })
+  } else {
+    recommendations.push({
+      title: "Investment Simulation",
+      type: "simulation",
+      description: "Advanced portfolio management simulation",
+      icon: <Activity className="h-4 w-4" />,
+      link: "/dashboard/simulations/investment",
+      badge: "Advanced",
+    })
+  }
+
+  // Activity-based recommendations
+  const hasPlayedGames = activities.some((a) => a.activity_type === "game")
+  const hasTakenQuizzes = activities.some((a) => a.activity_type === "quiz")
+
+  if (!hasPlayedGames) {
+    recommendations.push({
+      title: "Tax Rush",
+      type: "game",
+      description: "Race against time to file taxes correctly",
+      icon: <Gamepad2 className="h-4 w-4" />,
+      link: "/dashboard/games/tax-rush",
+      badge: "New",
+    })
+  }
+
+  if (!hasTakenQuizzes) {
+    recommendations.push({
+      title: "Financial Literacy Quiz",
+      type: "quiz",
+      description: "Test your knowledge of financial concepts",
+      icon: <BookOpen className="h-4 w-4" />,
+      link: "/dashboard/quizzes/financial-literacy",
+      badge: "Popular",
+    })
+  }
+
+  // Always recommend something
+  if (recommendations.length < 3) {
+    recommendations.push({
+      title: "Stock Market Simulator",
+      type: "simulation",
+      description: "Learn to invest in a simulated stock market",
+      icon: <Activity className="h-4 w-4" />,
+      link: "/dashboard/games/stock-market",
+      badge: "Featured",
+    })
+  }
+
+  return (
+   <Suggestions/>
+  )
+}
+
+// Main dashboard page component
+export default function UserDashboardPage() {
+  const router = useRouter()
+  const { userData } = useAuth()
+  const [activeTab, setActiveTab] = useState("overview")
+
+  // Use the cached data hook
+  const { activities, loading, error, lastUpdated, refreshData } = useCachedUserData(userData?.id)
 
   if (!userData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center gap-2"
-        >
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
-        </motion.div>
+      <div className="dashboard-theme flex min-h-screen items-center justify-center animated-bg">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-[hsl(var(--dashboard-primary))]" />
+          <p className="text-lg font-medium">Loading your dashboard...</p>
+          <Button variant="outline" onClick={() => router.push("/dashboard")} className="mt-4">
+            Return to Standard Dashboard
+          </Button>
+        </div>
       </div>
-    );
+    )
   }
 
-  const level = Math.floor(userData.xp / 100) + 1;
-  const xpForNextLevel = level * 100;
-  const currentLevelXp = userData.xp - (level - 1) * 100;
-  const xpProgress = (currentLevelXp / 100) * 100;
+  const level = Math.floor(userData.xp / 100) + 1
+  const currentLevelXp = userData.xp - (level - 1) * 100
+  const xpProgress = (currentLevelXp / 100) * 100
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={fadeIn}
-      className="flex flex-col min-h-screen bg-background text-foreground"
-    >
-      <div className="flex-1 space-y-6 p-6 md:p-8 pt-4">
-        <div className="flex items-center justify-between space-y-2">
-          <motion.h2
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-3xl font-extrabold tracking-tight"
-          >
-            Dashboard
-          </motion.h2>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="flex items-center space-x-2"
-          >
-            <Button variant="default" className="bg-primary hover:bg-primary/90 text-white">
-              <Wallet className="mr-2 h-4 w-4" />
-              <span>{userData.coins} Coins</span>
-            </Button>
-          </motion.div>
-        </div>
+    <div className="dashboard-theme min-h-screen">
+      <div className="flex flex-col">
+        <header className="border-b border-[hsla(var(--dashboard-border),0.5)] bg-[hsla(var(--dashboard-card),0.8)] backdrop-blur-sm sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-bold gradient-heading">Financial Analytics</h1>
+                <div className="hidden md:flex items-center space-x-1">
+                  <Badge
+                    variant="outline"
+                    className="bg-[hsla(var(--dashboard-primary),0.1)] text-[hsl(var(--dashboard-primary))]"
+                  >
+                    Level {level}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="bg-[hsla(var(--dashboard-secondary),0.1)] text-[hsl(var(--dashboard-secondary))]"
+                  >
+                    {userData.xp} XP
+                  </Badge>
+                </div>
+              </div>
 
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-sm">{error}</AlertDescription>
-          </Alert>
-        )}
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={refreshData}
+                        className="border-[hsla(var(--dashboard-border),0.5)]"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Refresh Data</p>
+                      {lastUpdated && (
+                        <p className="text-xs text-muted-foreground">
+                          Last updated: {lastUpdated.toLocaleTimeString()}
+                        </p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-muted/20 p-1 rounded-lg">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-background data-[state=active]:text-primary">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="activities" className="data-[state=active]:bg-background data-[state=active]:text-primary">
-              Activities
-            </TabsTrigger>
-            <TabsTrigger value="achievements" className="data-[state=active]:bg-background data-[state=active]:text-primary">
-              Achievements
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview" className="space-y-6">
-            <motion.div variants={staggerChildren} className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <motion.div variants={fadeIn} whileHover="hover">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-semibold">Current Level</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="text-3xl font-bold text-primary">Level {level}</div>
-                    <p className="text-xs text-muted-foreground">{userData.level}</p>
-                    <Progress value={xpProgress} className="mt-2 h-2 bg-muted" />
-                    <p className="text-xs text-muted-foreground text-center">
-                      {currentLevelXp}/{100} XP to Level {level + 1}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div variants={fadeIn} whileHover="hover">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-semibold">Wallet Balance</CardTitle>
-                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="text-3xl font-bold text-primary">{userData.coins} Coins</div>
-                    <p className="text-xs text-muted-foreground text-center">
-                      {activities.length > 0 && activities[0]?.coins_earned
-                        ? `+${activities[0].coins_earned} earned recently`
-                        : "Start activities to earn coins"}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div variants={fadeIn} whileHover="hover">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-semibold">Total XP</CardTitle>
-                    <Award className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="text-3xl font-bold text-primary">{userData.xp}</div>
-                    <p className="text-xs text-muted-foreground text-center">
-                      {activities.length > 0 && activities[0]?.xp_earned
-                        ? `+${activities[0].xp_earned} earned recently`
-                        : "Complete activities to earn XP"}
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div variants={fadeIn} whileHover="hover">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-semibold">Activities Completed</CardTitle>
-                    <Trophy className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="text-3xl font-bold text-primary">{activities.length}</div>
-                    <p className="text-xs text-muted-foreground text-center">Keep going to improve your rank!</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-            <motion.div variants={staggerChildren} className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-              <motion.div variants={fadeIn} whileHover="hover" className="col-span-4">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {loading ? (
-                      <div className="flex items-center justify-center py-6">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        <span className="ml-2 text-sm text-muted-foreground">Loading activities...</span>
+                <Button className="bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]">
+                  <Wallet className="mr-2 h-4 w-4" />
+                  <span>{userData.coins} Coins</span>
+                </Button>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push("/dashboard")}
+                        className="border-[hsla(var(--dashboard-border),0.5)]"
+                      >
+                        <Home className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Return to Standard Dashboard</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 container mx-auto px-4 py-6">
+          {error && (
+            <Alert className="mb-4 border-[hsl(var(--dashboard-danger))] bg-[hsla(var(--dashboard-danger),0.1)]">
+              <AlertCircle className="h-4 w-4 text-[hsl(var(--dashboard-danger))]" />
+              <AlertDescription className="text-[hsl(var(--dashboard-danger))]">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Welcome back, {userData.name || userData.email.split("@")[0]}</h2>
+                <p className="text-muted-foreground">Here's an overview of your financial learning journey</p>
+              </div>
+              <div className="hidden md:block">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-muted-foreground">Level Progress:</div>
+                  <div className="w-48 h-2 bg-[hsla(var(--dashboard-muted),0.5)] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${xpProgress}%`,
+                        background: `linear-gradient(90deg, 
+                          hsl(var(--dashboard-primary)) 0%, 
+                          hsl(var(--dashboard-secondary)) 100%)`,
+                      }}
+                    ></div>
+                  </div>
+                  <div className="text-sm">{currentLevelXp}/100 XP</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="bg-[hsla(var(--dashboard-muted),0.5)] p-1">
+              <TabsTrigger
+                value="overview"
+                className="data-[state=active]:bg-[hsla(var(--dashboard-primary),0.2)] data-[state=active]:text-[hsl(var(--dashboard-primary))]"
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger
+                value="activities"
+                className="data-[state=active]:bg-[hsla(var(--dashboard-secondary),0.2)] data-[state=active]:text-[hsl(var(--dashboard-secondary))]"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Activities
+              </TabsTrigger>
+              <TabsTrigger
+                value="achievements"
+                className="data-[state=active]:bg-[hsla(var(--dashboard-accent),0.2)] data-[state=active]:text-[hsl(var(--dashboard-accent))]"
+              >
+                <Trophy className="h-4 w-4 mr-2" />
+                Achievements
+              </TabsTrigger>
+              <TabsTrigger
+                value="profile"
+                className="data-[state=active]:bg-[hsla(var(--dashboard-info),0.2)] data-[state=active]:text-[hsl(var(--dashboard-info))]"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Profile
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-6">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-[hsl(var(--dashboard-primary))]" />
+                  <span className="ml-2">Loading analytics...</span>
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="gradient-card p-4 rounded-lg stat-card">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Current Level</p>
+                          <div className="text-2xl font-bold mt-1">Level {level}</div>
+                        </div>
+                        <div className="rounded-full p-3 bg-[hsla(var(--dashboard-primary),0.1)]">
+                          <TrendingUp className="h-5 w-5 text-[hsl(var(--dashboard-primary))]" />
+                        </div>
                       </div>
-                    ) : activities.length === 0 ? (
-                      <div className="text-center py-4 text-sm text-muted-foreground">
-                        No activities yet. Start playing games, taking quizzes, or trying simulations!
+                      <AnimatedProgressBar value={xpProgress} className="mt-2" />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {currentLevelXp}/100 XP to Level {level + 1}
+                      </p>
+                    </div>
+
+                    <div className="gradient-card p-4 rounded-lg stat-card">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                          <div className="text-2xl font-bold mt-1">{userData.coins} Coins</div>
+                        </div>
+                        <div className="rounded-full p-3 bg-[hsla(var(--dashboard-warning),0.1)]">
+                          <Wallet className="h-5 w-5 text-[hsl(var(--dashboard-warning))]" />
+                        </div>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {activities.slice(0, 3).map((activity) => (
-                          <motion.div
-                            key={activity.id}
-                            variants={fadeIn}
-                            className="flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="rounded-full bg-primary/10 p-2">
-                                {activity.activity_type === "quiz" && <BookOpen className="h-5 w-5 text-primary" />}
-                                {activity.activity_type === "game" && <Gamepad2 className="h-5 w-5 text-primary" />}
-                                {activity.activity_type === "simulation" && <BookOpen className="h-5 w-5 text-primary" />}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-foreground line-clamp-1">
-                                  {activity.activity_type === "quiz" && "Completed "}
-                                  {activity.activity_type === "game" && "Played "}
-                                  {activity.activity_type === "simulation" && "Completed "}
-                                  "{activity.activity_name}"
-                                </p>
-                                <p className="text-xs text-muted-foreground line-clamp-1">
-                                  Score: {activity.score} • +{activity.xp_earned} XP • +{activity.coins_earned} Coins
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-xs text-muted-foreground text-right min-w-[100px]">
+                      <p className="mt-4 text-xs text-muted-foreground">
+                        {activities.length > 0 && activities[0]?.coins_earned ? (
+                          <span className="flex items-center text-[hsl(var(--dashboard-success))]">
+                            <ArrowUpRight className="h-3 w-3 mr-1" />+{activities[0].coins_earned} earned recently
+                          </span>
+                        ) : (
+                          "Start activities to earn coins"
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="gradient-card p-4 rounded-lg stat-card">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total XP</p>
+                          <div className="text-2xl font-bold mt-1">{userData.xp}</div>
+                        </div>
+                        <div className="rounded-full p-3 bg-[hsla(var(--dashboard-secondary),0.1)]">
+                          <Award className="h-5 w-5 text-[hsl(var(--dashboard-secondary))]" />
+                        </div>
+                      </div>
+                      <p className="mt-4 text-xs text-muted-foreground">
+                        {activities.length > 0 && activities[0]?.xp_earned ? (
+                          <span className="flex items-center text-[hsl(var(--dashboard-success))]">
+                            <ArrowUpRight className="h-3 w-3 mr-1" />+{activities[0].xp_earned} earned recently
+                          </span>
+                        ) : (
+                          "Complete activities to earn XP"
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="gradient-card p-4 rounded-lg stat-card">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Activities Completed</p>
+                          <div className="text-2xl font-bold mt-1">{activities.length}</div>
+                        </div>
+                        <div className="rounded-full p-3 bg-[hsla(var(--dashboard-accent),0.1)]">
+                          <Trophy className="h-5 w-5 text-[hsl(var(--dashboard-accent))]" />
+                        </div>
+                      </div>
+                      <p className="mt-4 text-xs text-muted-foreground">Keep going to improve your rank!</p>
+                    </div>
+                  </div>
+
+                  <ActivityHeatmap activities={activities} />
+
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <ActivityPerformanceChart activities={activities} />
+                    <ActivityTypeDonut activities={activities} />
+                    <ResourcesTrendChart activities={activities} />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <UserStatsCard userData={userData} activities={activities} />
+                    <RecommendationsCard userData={userData} activities={activities} />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <RecentActivitiesCard activities={activities} />
+                    <AchievementProgressCard userData={userData} activities={activities} />
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="activities" className="space-y-6">
+              <div className="gradient-card p-4 rounded-lg">
+                <h3 className="text-lg font-bold gradient-heading mb-4">Activity History</h3>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-[hsl(var(--dashboard-primary))]" />
+                    <span className="ml-2">Loading activities...</span>
+                  </div>
+                ) : activities.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <p>No activities yet. Start playing games, taking quizzes, or trying simulations!</p>
+                    <Button
+                      className="mt-4 bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]"
+                      onClick={() => router.push("/dashboard/games")}
+                    >
+                      <Gamepad2 className="mr-2 h-4 w-4" />
+                      Explore Games
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {activities.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-center p-3 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect"
+                      >
+                        <div
+                          className="mr-4 rounded-full p-2"
+                          style={{
+                            background:
+                              activity.activity_type === "quiz"
+                                ? "hsla(var(--dashboard-secondary), 0.2)"
+                                : activity.activity_type === "game"
+                                  ? "hsla(var(--dashboard-primary), 0.2)"
+                                  : "hsla(var(--dashboard-accent), 0.2)",
+                          }}
+                        >
+                          {activity.activity_type === "quiz" && (
+                            <BookOpen className="h-4 w-4 text-[hsl(var(--dashboard-secondary))]" />
+                          )}
+                          {activity.activity_type === "game" && (
+                            <Gamepad2 className="h-4 w-4 text-[hsl(var(--dashboard-primary))]" />
+                          )}
+                          {activity.activity_type === "simulation" && (
+                            <Activity className="h-4 w-4 text-[hsl(var(--dashboard-accent))]" />
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex justify-between">
+                            <p className="text-sm font-medium leading-none">{activity.activity_name}</p>
+                            <Badge
+                              className={
+                                activity.activity_type === "quiz"
+                                  ? "bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]"
+                                  : activity.activity_type === "game"
+                                    ? "bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]"
+                                    : "bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]"
+                              }
+                            >
+                              {activity.activity_type.charAt(0).toUpperCase() + activity.activity_type.slice(1)}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <p className="text-xs text-muted-foreground">
+                              Score: {activity.score}% • +{activity.xp_earned} XP • +{activity.coins_earned} Coins
+                            </p>
+                            <p className="text-xs text-muted-foreground">
                               {new Date(activity.created_at).toLocaleString(undefined, {
                                 month: "short",
                                 day: "numeric",
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <Suggestions />
-            </motion.div>
-          </TabsContent>
-          <TabsContent value="activities" className="space-y-6">
-            <motion.div variants={staggerChildren} className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <motion.div variants={fadeIn} whileHover="hover">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader>
-                    <CardTitle>Simulations</CardTitle>
-                    <CardDescription>Interactive financial scenarios</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="rounded-lg border p-4 bg-muted/20 hover:bg-muted/30 transition-colors">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium text-foreground">Budgeting Basics</h4>
-                          <Badge variant="outline" className="text-xs">
-                            Available
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          Learn to create and manage a monthly budget
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" /> 15 min
+                            </p>
                           </div>
-                          <Link href="/dashboard/simulations/budgeting">
-                            <Button variant="outline" size="sm" className="hover:bg-primary/10">
-                              Start
-                            </Button>
-                          </Link>
                         </div>
                       </div>
-                    </div>
-                    <Link href="/dashboard/simulations">
-                      <Button variant="link" className="w-full text-primary hover:underline">
-                        View All Simulations
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div variants={fadeIn} whileHover="hover">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader>
-                    <CardTitle>Mini-Games</CardTitle>
-                    <CardDescription>Fun financial games</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="rounded-lg border p-4 bg-muted/20 hover:bg-muted/30 transition-colors">
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="gradient-card p-4 rounded-lg">
+                  <div className="flex items-center mb-4">
+                    <Gamepad2 className="h-5 w-5 mr-2 text-[hsl(var(--dashboard-primary))]" />
+                    <h3 className="text-lg font-bold">Games</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3 glow-effect">
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium text-foreground">Tax Rush</h4>
-                          <Badge variant="outline" className="text-xs">
+                          <h4 className="text-sm font-medium">Tax Rush</h4>
+                          <Badge
+                            variant="outline"
+                            className="bg-[hsla(var(--dashboard-primary),0.1)] text-[hsl(var(--dashboard-primary))]"
+                          >
                             New
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          Race against time to file taxes correctly
-                        </p>
+                        <p className="text-xs text-muted-foreground">Race against time to file taxes correctly</p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Gamepad2 className="h-3 w-3" /> 10 min
+                            <Clock className="h-3 w-3" /> 10 min
                           </div>
                           <Link href="/dashboard/games/tax-rush">
-                            <Button variant="outline" size="sm" className="hover:bg-primary/10">
+                            <Button
+                              size="sm"
+                              className="bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]"
+                            >
                               Play
                             </Button>
                           </Link>
@@ -343,37 +1210,44 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <Link href="/dashboard/games">
-                      <Button variant="link" className="w-full text-primary hover:underline">
+                      <Button
+                        variant="outline"
+                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-primary),0.1)]"
+                      >
                         View All Games
+                        <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              <motion.div variants={fadeIn} whileHover="hover">
-                <Card className="bg-card border-muted shadow-md">
-                  <CardHeader>
-                    <CardTitle>Quizzes</CardTitle>
-                    <CardDescription>Test your knowledge</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="rounded-lg border p-4 bg-muted/20 hover:bg-muted/30 transition-colors">
+                  </div>
+                </div>
+
+                <div className="gradient-card p-4 rounded-lg">
+                  <div className="flex items-center mb-4">
+                    <BookOpen className="h-5 w-5 mr-2 text-[hsl(var(--dashboard-secondary))]" />
+                    <h3 className="text-lg font-bold">Quizzes</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3 glow-effect">
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium text-foreground">Budgeting Basics</h4>
-                          <Badge variant="outline" className="text-xs">
-                            Available
+                          <h4 className="text-sm font-medium">Budgeting Basics</h4>
+                          <Badge
+                            variant="outline"
+                            className="bg-[hsla(var(--dashboard-secondary),0.1)] text-[hsl(var(--dashboard-secondary))]"
+                          >
+                            Popular
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          Test your budgeting knowledge
-                        </p>
+                        <p className="text-xs text-muted-foreground">Test your budgeting knowledge</p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3" /> 5 min
+                            <Clock className="h-3 w-3" /> 5 min
                           </div>
                           <Link href="/dashboard/quizzes/budgeting">
-                            <Button variant="outline" size="sm" className="hover:bg-primary/10">
+                            <Button
+                              size="sm"
+                              className="bg-[hsl(var(--dashboard-secondary))] hover:bg-[hsla(var(--dashboard-secondary),0.8)]"
+                            >
                               Take Quiz
                             </Button>
                           </Link>
@@ -381,76 +1255,301 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <Link href="/dashboard/quizzes">
-                      <Button variant="link" className="w-full text-primary hover:underline">
+                      <Button
+                        variant="outline"
+                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-secondary),0.1)]"
+                      >
                         View All Quizzes
+                        <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-          <TabsContent value="achievements" className="space-y-6">
-            <motion.div variants={fadeIn} whileHover="hover">
-              <Card className="bg-card border-muted shadow-md">
-                <CardHeader>
-                  <CardTitle>Badges</CardTitle>
-                  <CardDescription>Achievements you've earned</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    <motion.div variants={fadeIn} className="flex flex-col items-center gap-2 text-center">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                        <Award className="h-8 w-8 text-primary" />
-                      </div>
-                      <span className="text-xs font-medium">First Login</span>
-                    </motion.div>
-                    {userData.xp >= 100 && (
-                      <motion.div variants={fadeIn} className="flex flex-col items-center gap-2 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                          <TrendingUp className="h-8 w-8 text-primary" />
-                        </div>
-                        <span className="text-xs font-medium">Level Up</span>
-                      </motion.div>
-                    )}
-                    {activities.some((a) => a.activity_type === "quiz") && (
-                      <motion.div variants={fadeIn} className="flex flex-col items-center gap-2 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                          <BookOpen className="h-8 w-8 text-primary" />
-                        </div>
-                        <span className="text-xs font-medium">Quiz Taker</span>
-                      </motion.div>
-                    )}
-                    {activities.some((a) => a.activity_type === "game") && (
-                      <motion.div variants={fadeIn} className="flex flex-col items-center gap-2 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                          <Gamepad2 className="h-8 w-8 text-primary" />
-                        </div>
-                        <span className="text-xs font-medium">Game Player</span>
-                      </motion.div>
-                    )}
-                    {userData.coins >= 100 && (
-                      <motion.div variants={fadeIn} className="flex flex-col items-center gap-2 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                          <Wallet className="h-8 w-8 text-primary" />
-                        </div>
-                        <span className="text-xs font-medium">Saver</span>
-                      </motion.div>
-                    )}
                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Link href="/dashboard/achievements">
-                    <Button variant="outline" className="w-full hover:bg-primary/10">
-                      View All Badges
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          </TabsContent>
-        </Tabs>
+                </div>
+
+                <div className="gradient-card p-4 rounded-lg">
+                  <div className="flex items-center mb-4">
+                    <Activity className="h-5 w-5 mr-2 text-[hsl(var(--dashboard-accent))]" />
+                    <h3 className="text-lg font-bold">Simulations</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3 glow-effect">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium">Investment Simulation</h4>
+                          <Badge
+                            variant="outline"
+                            className="bg-[hsla(var(--dashboard-accent),0.1)] text-[hsl(var(--dashboard-accent))]"
+                          >
+                            Advanced
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Learn how to build a diversified portfolio</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" /> 15 min
+                          </div>
+                          <Link href="/dashboard/simulations/investment">
+                            <Button
+                              size="sm"
+                              className="bg-[hsl(var(--dashboard-accent))] hover:bg-[hsla(var(--dashboard-accent),0.8)]"
+                            >
+                              Start
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                    <Link href="/dashboard/simulations">
+                      <Button
+                        variant="outline"
+                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-accent),0.1)]"
+                      >
+                        View All Simulations
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="achievements" className="space-y-6">
+              <AchievementProgressCard userData={userData} activities={activities} />
+
+              <div className="gradient-card p-4 rounded-lg">
+                <h3 className="text-lg font-bold gradient-heading mb-4">Badges</h3>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-secondary),0.2)]">
+                      <Award className="h-8 w-8 text-[hsl(var(--dashboard-secondary))]" />
+                    </div>
+                    <span className="text-sm font-medium">First Login</span>
+                    <Badge className="bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]">
+                      Earned
+                    </Badge>
+                  </div>
+
+                  {userData.xp >= 100 && (
+                    <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-primary),0.2)]">
+                        <TrendingUp className="h-8 w-8 text-[hsl(var(--dashboard-primary))]" />
+                      </div>
+                      <span className="text-sm font-medium">Level Up</span>
+                      <Badge className="bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]">
+                        Earned
+                      </Badge>
+                    </div>
+                  )}
+
+                  {activities.some((a) => a.activity_type === "quiz") && (
+                    <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-accent),0.2)]">
+                        <BookOpen className="h-8 w-8 text-[hsl(var(--dashboard-accent))]" />
+                      </div>
+                      <span className="text-sm font-medium">Quiz Taker</span>
+                      <Badge className="bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]">
+                        Earned
+                      </Badge>
+                    </div>
+                  )}
+
+                  {activities.some((a) => a.activity_type === "game") && (
+                    <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-info),0.2)]">
+                        <Gamepad2 className="h-8 w-8 text-[hsl(var(--dashboard-info))]" />
+                      </div>
+                      <span className="text-sm font-medium">Game Player</span>
+                      <Badge className="bg-[hsla(var(--dashboard-info),0.2)] text-[hsl(var(--dashboard-info))]">
+                        Earned
+                      </Badge>
+                    </div>
+                  )}
+
+                  {userData.coins >= 100 && (
+                    <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-warning),0.2)]">
+                        <Wallet className="h-8 w-8 text-[hsl(var(--dashboard-warning))]" />
+                      </div>
+                      <span className="text-sm font-medium">Saver</span>
+                      <Badge className="bg-[hsla(var(--dashboard-warning),0.2)] text-[hsl(var(--dashboard-warning))]">
+                        Earned
+                      </Badge>
+                    </div>
+                  )}
+
+                  {activities.some((a) => a.score === 100) && (
+                    <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-success),0.2)]">
+                        <Target className="h-8 w-8 text-[hsl(var(--dashboard-success))]" />
+                      </div>
+                      <span className="text-sm font-medium">Perfect Score</span>
+                      <Badge className="bg-[hsla(var(--dashboard-success),0.2)] text-[hsl(var(--dashboard-success))]">
+                        Earned
+                      </Badge>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-muted),0.2)]">
+                      <Flame className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <span className="text-sm font-medium">Streak Master</span>
+                    <Badge variant="outline">Locked</Badge>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-muted),0.2)]">
+                      <Gift className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <span className="text-sm font-medium">Collector</span>
+                    <Badge variant="outline">Locked</Badge>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-muted),0.2)]">
+                      <Crown className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <span className="text-sm font-medium">Financial Guru</span>
+                    <Badge variant="outline">Locked</Badge>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="profile" className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="gradient-card p-4 rounded-lg">
+                  <h3 className="text-lg font-bold gradient-heading mb-4">User Profile</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="h-20 w-20 rounded-full bg-[hsla(var(--dashboard-primary),0.2)] flex items-center justify-center">
+                        <User className="h-10 w-10 text-[hsl(var(--dashboard-primary))]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold">{userData.name || userData.email.split("@")[0]}</h4>
+                        <p className="text-muted-foreground">{userData.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className="bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]">
+                            Level {level}
+                          </Badge>
+                          <Badge className="bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]">
+                            {userData.xp} XP
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Account Information</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3">
+                          <p className="text-xs text-muted-foreground">Member Since</p>
+                          <p className="font-medium">
+                            {new Date().toLocaleDateString(undefined, {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </p>
+                        </div>
+                        <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3">
+                          <p className="text-xs text-muted-foreground">Account Type</p>
+                          <p className="font-medium">Standard</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-primary),0.1)]"
+                        onClick={() => router.push("/settings")}
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Edit Profile
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="gradient-card p-4 rounded-lg">
+                  <h3 className="text-lg font-bold gradient-heading mb-4">Learning Journey</h3>
+                  <div className="space-y-4">
+                    <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-sm font-medium">Progress Overview</h4>
+                        <Badge className="bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]">
+                          {activities.length} Activities
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Quizzes</span>
+                          <span>{activities.filter((a) => a.activity_type === "quiz").length} completed</span>
+                        </div>
+                        <AnimatedProgressBar
+                          value={
+                            activities.length > 0
+                              ? (activities.filter((a) => a.activity_type === "quiz").length / activities.length) * 100
+                              : 0
+                          }
+                        />
+
+                        <div className="flex justify-between text-xs mt-3">
+                          <span className="text-muted-foreground">Games</span>
+                          <span>{activities.filter((a) => a.activity_type === "game").length} completed</span>
+                        </div>
+                        <AnimatedProgressBar
+                          value={
+                            activities.length > 0
+                              ? (activities.filter((a) => a.activity_type === "game").length / activities.length) * 100
+                              : 0
+                          }
+                        />
+
+                        <div className="flex justify-between text-xs mt-3">
+                          <span className="text-muted-foreground">Simulations</span>
+                          <span>{activities.filter((a) => a.activity_type === "simulation").length} completed</span>
+                        </div>
+                        <AnimatedProgressBar
+                          value={
+                            activities.length > 0
+                              ? (activities.filter((a) => a.activity_type === "simulation").length /
+                                  activities.length) *
+                                100
+                              : 0
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lightbulb className="h-4 w-4 text-[hsl(var(--dashboard-warning))]" />
+                        <h4 className="text-sm font-medium">Learning Tip</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Diversify your learning by trying different activity types. Games can make complex financial
+                        concepts more engaging, while quizzes help reinforce your knowledge.
+                      </p>
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        className="w-full bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]"
+                        onClick={() => router.push("/dashboard/learning-path")}
+                      >
+                        <Zap className="mr-2 h-4 w-4" />
+                        View Learning Path
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </main>
       </div>
-    </motion.div>
-  );
+    </div>
+  )
 }

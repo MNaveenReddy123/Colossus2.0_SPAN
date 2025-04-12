@@ -1,415 +1,462 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Award, Landmark, CreditCard, PiggyBank, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowLeft, Award, Landmark, CreditCard, PiggyBank, ArrowUpRight, ArrowDownRight, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Wallet, Building2, ShoppingCart, Home, Utensils, Bus, GraduationCap, HeartPulse, Trophy, Star, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
 import { saveActivityProgress } from "@/actions/user-actions";
 import { toast } from "@/components/ui/use-toast";
+import { Progress } from "@/components/ui/progress";
 
-export default function BankingBasics() {
-  const router = useRouter();
+type Challenge = {
+  id: string;
+  title: string;
+  description: string;
+  reward: { xp: number; coins: number };
+  completed: boolean;
+  progress: number;
+  target: number;
+  type: "savings" | "investment" | "budget" | "emergency";
+};
+
+type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  reward: { xp: number; coins: number };
+  unlocked: boolean;
+  icon: any;
+};
+
+export default function BankingBasicsGame() {
   const { userData, refreshUserData } = useAuth();
+  const [gameState, setGameState] = useState<"start" | "playing" | "end">("start");
   const [balance, setBalance] = useState(1000);
-  const [accountType, setAccountType] = useState<string | null>(null);
-  const [transactions, setTransactions] = useState<string[]>([]);
-  const [timeLeft, setTimeLeft] = useState(480); // 8 minutes
-  const [gameStatus, setGameStatus] = useState<"not_started" | "in_progress" | "completed">("not_started");
+  const [savings, setSavings] = useState(0);
+  const [investments, setInvestments] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(3000);
+  const [monthlyExpenses, setMonthlyExpenses] = useState(2000);
+  const [currentMonth, setCurrentMonth] = useState(1);
   const [score, setScore] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [interestAccrued, setInterestAccrued] = useState(0);
+  const [totalXPEarned, setTotalXPEarned] = useState(0);
+  const [totalCoinsEarned, setTotalCoinsEarned] = useState(0);
 
-  useEffect(() => {
-    if (gameStatus !== "in_progress") return;
+  const [challenges, setChallenges] = useState<Challenge[]>([
+    {
+      id: "emergency-fund",
+      title: "Build Emergency Fund",
+      description: "Save $5,000 in your emergency fund",
+      reward: { xp: 3, coins: 5 },
+      completed: false,
+      progress: 0,
+      target: 5000,
+      type: "emergency"
+    },
+    {
+      id: "investment-starter",
+      title: "Investment Starter",
+      description: "Invest $1,000 in your investment account",
+      reward: { xp: 2, coins: 4 },
+      completed: false,
+      progress: 0,
+      target: 1000,
+      type: "investment"
+    },
+    {
+      id: "savings-master",
+      title: "Savings Master",
+      description: "Save 20% of your income for 3 months",
+      reward: { xp: 4, coins: 5 },
+      completed: false,
+      progress: 0,
+      target: 3,
+      type: "savings"
+    },
+    {
+      id: "budget-pro",
+      title: "Budget Pro",
+      description: "Keep expenses below 70% of income for 3 months",
+      reward: { xp: 3, coins: 4 },
+      completed: false,
+      progress: 0,
+      target: 3,
+      type: "budget"
+    }
+  ]);
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setGameStatus("completed");
-          handleGameEnd();
-          return 0;
-        }
-        return prev - 1;
+  const [achievements, setAchievements] = useState<Achievement[]>([
+    {
+      id: "first-save",
+      title: "First Save",
+      description: "Make your first savings deposit",
+      reward: { xp: 2, coins: 3 },
+      unlocked: false,
+      icon: PiggyBank
+    },
+    {
+      id: "first-investment",
+      title: "First Investment",
+      description: "Make your first investment",
+      reward: { xp: 2, coins: 3 },
+      unlocked: false,
+      icon: Building2
+    },
+    {
+      id: "emergency-ready",
+      title: "Emergency Ready",
+      description: "Build a 3-month emergency fund",
+      reward: { xp: 3, coins: 4 },
+      unlocked: false,
+      icon: AlertTriangle
+    },
+    {
+      id: "budget-master",
+      title: "Budget Master",
+      description: "Successfully budget for 6 months",
+      reward: { xp: 4, coins: 5 },
+      unlocked: false,
+      icon: CreditCard
+    }
+  ]);
+
+  const handleSave = (amount: number) => {
+    if (amount > balance) {
+      toast({
+        title: "Insufficient Funds",
+        description: "You don't have enough money in your balance",
+        variant: "destructive"
       });
-
-      if (accountType === "Savings" && timeLeft % 30 === 0) {
-        const interest = Number.parseFloat((balance * 0.01).toFixed(2));
-        setBalance((prev) => Number.parseFloat((prev + interest).toFixed(2)));
-        setInterestAccrued((prev) => Number.parseFloat((prev + interest).toFixed(2)));
-        setTransactions((prev) => [...prev, `Earned $${interest.toFixed(2)} interest`]);
-        setScore((prev) => prev + 5);
-        toast({ title: "Interest!", description: `+$${interest.toFixed(2)}`, className: "bg-green-700 text-gray-100" });
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [gameStatus, timeLeft, accountType, balance]);
-
-  const handleAccountSelection = (type: string) => {
-    if (accountType) {
-      setTransactions((prev) => [...prev, `Switched to ${type}`]);
-    } else {
-      setTransactions((prev) => [...prev, `Opened ${type}`]);
-      setScore((prev) => prev + 10);
+      return;
     }
-    setAccountType(type);
-    toast({ title: "Account Set!", description: `${type} selected`, className: "bg-teal-700 text-gray-100" });
-  };
 
-  const makeDeposit = (amount: number) => {
-    setBalance((prev) => Number.parseFloat((prev + amount).toFixed(2)));
-    setTransactions((prev) => [...prev, `Deposited $${amount.toFixed(2)}`]);
-    setScore((prev) => prev + 5);
-    toast({ title: "Deposit!", description: `+$${amount.toFixed(2)}`, className: "bg-green-700 text-gray-100" });
-  };
+    setBalance(prev => prev - amount);
+    setSavings(prev => prev + amount);
+    setScore(prev => prev + 10);
 
-  const makeWithdrawal = (amount: number) => {
-    if (balance >= amount) {
-      setBalance((prev) => Number.parseFloat((prev - amount).toFixed(2)));
-      setTransactions((prev) => [...prev, `Withdrew $${amount.toFixed(2)}`]);
-      if (accountType === "Savings" && amount > 100) {
-        const penalty = 5;
-        setBalance((prev) => Number.parseFloat((prev - penalty).toFixed(2)));
-        setTransactions((prev) => [...prev, `Penalty: -$${penalty.toFixed(2)}`]);
-        setScore((prev) => prev - 5);
-        toast({ title: "Penalty!", description: "-$5 fee", className: "bg-red-800 text-gray-100" });
-      } else {
-        setScore((prev) => prev + 3);
-      }
-    } else {
-      setTransactions((prev) => [...prev, `Failed: Insufficient funds`]);
-      setScore((prev) => prev - 10);
-      toast({ title: "Overdraft!", description: "Not enough funds!", className: "bg-red-800 text-gray-100" });
+    // Check achievements
+    if (!achievements.find(a => a.id === "first-save")?.unlocked) {
+      const newAchievements = achievements.map(a =>
+        a.id === "first-save" ? { ...a, unlocked: true } : a
+      );
+      setAchievements(newAchievements);
+      awardAchievement("first-save");
     }
+
+    // Update challenge progress
+    const newChallenges = challenges.map(c => {
+      if (c.type === "emergency") {
+        const newProgress = c.progress + amount;
+        if (newProgress >= c.target && !c.completed) {
+          awardChallenge(c.id);
+        }
+        return { ...c, progress: newProgress };
+      }
+      return c;
+    });
+    setChallenges(newChallenges);
   };
 
-  const handleGameEnd = async () => {
-    if (!userData) return;
-    const { xpEarned, coinsEarned, finalScore } = calculateRewards();
+  const handleInvest = (amount: number) => {
+    if (amount > balance) {
+      toast({
+        title: "Insufficient Funds",
+        description: "You don't have enough money in your balance",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setBalance(prev => prev - amount);
+    setInvestments(prev => prev + amount);
+    setScore(prev => prev + 15);
+
+    // Check achievements
+    if (!achievements.find(a => a.id === "first-investment")?.unlocked) {
+      const newAchievements = achievements.map(a =>
+        a.id === "first-investment" ? { ...a, unlocked: true } : a
+      );
+      setAchievements(newAchievements);
+      awardAchievement("first-investment");
+    }
+
+    // Update challenge progress
+    const newChallenges = challenges.map(c => {
+      if (c.type === "investment") {
+        const newProgress = c.progress + amount;
+        if (newProgress >= c.target && !c.completed) {
+          awardChallenge(c.id);
+        }
+        return { ...c, progress: newProgress };
+      }
+      return c;
+    });
+    setChallenges(newChallenges);
+  };
+
+  const awardAchievement = async (achievementId: string) => {
+    const achievement = achievements.find(a => a.id === achievementId);
+    if (!achievement || !userData) return;
+
     try {
       setIsSubmitting(true);
-      const result = await saveActivityProgress(userData.id, "game", "Banking Basics", finalScore, xpEarned, coinsEarned);
+      const result = await saveActivityProgress(
+        userData.id,
+        "game",
+        achievement.title,
+        score,
+        achievement.reward.xp,
+        achievement.reward.coins
+      );
+
       if (result.success) {
+        setTotalXPEarned(prev => prev + achievement.reward.xp);
+        setTotalCoinsEarned(prev => prev + achievement.reward.coins);
         await refreshUserData();
         toast({
-          title: "Banking Mastered!",
-          description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
-          className: "bg-gradient-to-r from-teal-700 to-gray-700 text-gray-100",
+          title: "Achievement Unlocked!",
+          description: `${achievement.title} - ${achievement.description}`,
+          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
         });
       }
     } catch (error) {
-      console.error("Error saving game progress:", error);
-      toast({ title: "Error", description: "Failed to save progress.", className: "bg-red-800 text-gray-100" });
+      console.error("Error saving achievement:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `${min}:${sec < 10 ? "0" : ""}${sec}`;
+  const awardChallenge = async (challengeId: string) => {
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (!challenge || !userData) return;
+
+    try {
+      setIsSubmitting(true);
+      const result = await saveActivityProgress(
+        userData.id,
+        "game",
+        challenge.title,
+        score,
+        challenge.reward.xp,
+        challenge.reward.coins
+      );
+
+      if (result.success) {
+        setTotalXPEarned(prev => prev + challenge.reward.xp);
+        setTotalCoinsEarned(prev => prev + challenge.reward.coins);
+        await refreshUserData();
+        toast({
+          title: "Challenge Complete!",
+          description: `${challenge.title} - ${challenge.description}`,
+          className: "bg-gradient-to-r from-green-500 to-blue-500 text-white",
+        });
+      }
+    } catch (error) {
+      console.error("Error saving challenge:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const calculateRewards = () => {
-    const finalScore = score + Math.floor(balance / 100) * 5;
-    const xpEarned = Math.min(Math.max(finalScore, 15), 50);
-    const coinsEarned = Math.min(Math.max(Math.floor(finalScore / 2), 10), 30);
-    return { xpEarned, coinsEarned, finalScore };
+  const advanceMonth = () => {
+    setCurrentMonth(prev => prev + 1);
+    setBalance(prev => prev + monthlyIncome - monthlyExpenses);
+    setScore(prev => prev + 20);
+
+    // Check monthly challenges
+    const newChallenges = challenges.map(c => {
+      if (c.type === "savings" && savings >= monthlyIncome * 0.2) {
+        const newProgress = c.progress + 1;
+        if (newProgress >= c.target && !c.completed) {
+          awardChallenge(c.id);
+        }
+        return { ...c, progress: newProgress };
+      }
+      if (c.type === "budget" && monthlyExpenses <= monthlyIncome * 0.7) {
+        const newProgress = c.progress + 1;
+        if (newProgress >= c.target && !c.completed) {
+          awardChallenge(c.id);
+        }
+        return { ...c, progress: newProgress };
+      }
+      return c;
+    });
+    setChallenges(newChallenges);
+
+    // Check achievements
+    if (savings >= monthlyIncome * 3 && !achievements.find(a => a.id === "emergency-ready")?.unlocked) {
+      const newAchievements = achievements.map(a =>
+        a.id === "emergency-ready" ? { ...a, unlocked: true } : a
+      );
+      setAchievements(newAchievements);
+      awardAchievement("emergency-ready");
+    }
+
+    if (currentMonth >= 6 && !achievements.find(a => a.id === "budget-master")?.unlocked) {
+      const newAchievements = achievements.map(a =>
+        a.id === "budget-master" ? { ...a, unlocked: true } : a
+      );
+      setAchievements(newAchievements);
+      awardAchievement("budget-master");
+    }
   };
+
+  if (gameState === "start") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center p-6">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-center">Banking Basics Challenge</CardTitle>
+            <CardDescription className="text-center text-lg">
+              Complete financial challenges and earn rewards!
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              <Badge className="text-lg">Earn XP & Coins</Badge>
+              <Badge className="text-lg">Complete Challenges</Badge>
+              <Badge className="text-lg">Unlock Achievements</Badge>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button
+              onClick={() => setGameState("playing")}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 text-lg"
+            >
+              Start Challenge
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-teal-900 flex flex-col items-center p-6">
-      {/* Header */}
-      <motion.div
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="flex items-center justify-between w-full max-w-4xl mb-6"
-      >
-        <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex flex-col items-center p-6">
+      <div className="w-full max-w-4xl">
+        <div className="flex justify-between items-center mb-6">
           <Link href="/dashboard/games">
-            <Button variant="outline" size="icon" className="bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600">
-              <ArrowLeft className="h-5 w-5" />
+            <Button variant="outline" size="icon">
+              <ArrowLeft />
             </Button>
           </Link>
-          <h1 className="text-4xl font-extrabold text-gray-100 drop-shadow-md">Banking Basics</h1>
+          <div className="flex items-center space-x-4">
+            <Badge>Month {currentMonth}</Badge>
+            <Badge>Score: {score}</Badge>
+            <Badge>XP: {totalXPEarned}</Badge>
+            <Badge>Coins: {totalCoinsEarned}</Badge>
+          </div>
         </div>
-        <Badge className="bg-teal-700 text-gray-100 text-sm font-semibold">Beginner</Badge>
-      </motion.div>
 
-      {/* Game Card */}
-      <Card className="w-full max-w-4xl bg-gray-800/80 backdrop-blur-lg border border-gray-700 shadow-2xl">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-gray-100 text-center">Banking Basics</CardTitle>
-          <CardDescription className="text-center text-teal-300">
-            Master your money moves!
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Stats */}
-          <motion.div
-            className="flex justify-between text-gray-100 font-semibold text-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <motion.span
-              animate={{ scale: timeLeft < 30 ? [1, 1.1, 1] : 1 }}
-              transition={{ repeat: timeLeft < 30 ? Infinity : 0, duration: 0.5 }}
-            >
-              ⏳ {formatTime(timeLeft)}
-            </motion.span>
-            <span>💰 Balance: ${balance.toFixed(2)}</span>
-            <span>🏆 Score: {score}</span>
-          </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Balance</span>
+                <Wallet className="text-blue-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${balance.toFixed(2)}</div>
+            </CardContent>
+          </Card>
 
-          {/* Start Screen */}
-          {gameStatus === "not_started" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center space-y-6"
-            >
-              <h3 className="text-2xl font-bold text-gray-100">Welcome to Banking Basics!</h3>
-              <p className="text-teal-300">
-                Pick an account, make deposits, and withdraw wisely. Savings earns 1% interest every 30s but watch out for penalties!
-              </p>
-              <Button
-                onClick={() => setGameStatus("in_progress")}
-                className="bg-gradient-to-r from-teal-700 to-gray-700 text-gray-100 px-6 py-3 rounded-full shadow-lg hover:from-teal-600 hover:to-gray-600"
-              >
-                Start Banking
-              </Button>
-            </motion.div>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Savings</span>
+                <PiggyBank className="text-green-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${savings.toFixed(2)}</div>
+            </CardContent>
+          </Card>
 
-          {/* Playing Screen */}
-          {gameStatus === "in_progress" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Account Selection & Transactions */}
-              <div className="space-y-6">
-                <motion.div
-                  className="p-4 bg-gray-700/50 rounded-xl border border-gray-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-xl font-semibold text-gray-100 mb-2">Choose Your Account</h3>
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => handleAccountSelection("Savings")}
-                      variant={accountType === "Savings" ? "default" : "outline"}
-                      className={`flex gap-2 ${accountType === "Savings" ? "bg-teal-700 hover:bg-teal-600" : "bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600"}`}
-                    >
-                      <PiggyBank className="h-4 w-4" />
-                      Savings
-                    </Button>
-                    <Button
-                      onClick={() => handleAccountSelection("Checking")}
-                      variant={accountType === "Checking" ? "default" : "outline"}
-                      className={`flex gap-2 ${accountType === "Checking" ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600"}`}
-                    >
-                      <CreditCard className="h-4 w-4" />
-                      Checking
-                    </Button>
-                  </div>
-                  <p className="text-xs text-teal-300 mt-2">
-                    {accountType === "Savings" ? "1% interest every 30s, but penalties for big withdrawals." : accountType === "Checking" ? "No interest, no penalties." : "Pick an account to start!"}
-                  </p>
-                </motion.div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Investments</span>
+                <Building2 className="text-purple-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${investments.toFixed(2)}</div>
+            </CardContent>
+          </Card>
+        </div>
 
-                <motion.div
-                  className="p-4 bg-gray-700/50 rounded-xl border border-gray-600 max-h-48 overflow-y-auto"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-xl font-semibold text-gray-100 mb-2">Activity Log</h3>
-                  <ul className="space-y-1 text-sm text-teal-300">
-                    {transactions.length === 0 ? (
-                      <li>No moves yet—start banking!</li>
-                    ) : (
-                      transactions.map((entry, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <Landmark className="h-3 w-3 text-teal-400" />
-                          {entry}
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                </motion.div>
-              </div>
-
-              {/* Transactions & Summary */}
-              <div className="space-y-6">
-                <motion.div
-                  className="p-4 bg-gray-700/50 rounded-xl border border-gray-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-xl font-semibold text-gray-100 mb-2">Make a Move</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      onClick={() => makeDeposit(100)}
-                      className="flex gap-2 bg-green-700 hover:bg-green-600 text-gray-100 rounded-full"
-                      disabled={!accountType}
-                    >
-                      <ArrowDownRight className="h-4 w-4" />
-                      $100
-                    </Button>
-                    <Button
-                      onClick={() => makeDeposit(500)}
-                      className="flex gap-2 bg-green-700 hover:bg-green-600 text-gray-100 rounded-full"
-                      disabled={!accountType}
-                    >
-                      <ArrowDownRight className="h-4 w-4" />
-                      $500
-                    </Button>
-                    <Button
-                      onClick={() => makeWithdrawal(50)}
-                      className="flex gap-2 bg-red-800 hover:bg-red-700 text-gray-100 rounded-full"
-                      disabled={!accountType || balance < 50}
-                    >
-                      <ArrowUpRight className="h-4 w-4" />
-                      $50
-                    </Button>
-                    <Button
-                      onClick={() => makeWithdrawal(200)}
-                      className="flex gap-2 bg-red-800 hover:bg-red-700 text-gray-100 rounded-full"
-                      disabled={!accountType || balance < 200}
-                    >
-                      <ArrowUpRight className="h-4 w-4" />
-                      $200
-                    </Button>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="p-4 bg-gray-700/50 rounded-xl border border-gray-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <h3 className="text-xl font-semibold text-gray-100 mb-2">Account Summary</h3>
-                  <div className="space-y-2 text-teal-300">
-                    <div className="flex justify-between">
-                      <span>Type:</span>
-                      <span>{accountType || "None"}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Challenges</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {challenges.map(challenge => (
+                <div key={challenge.id} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <Target className="text-purple-500" />
+                      <span>{challenge.title}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Balance:</span>
-                      <span className="text-gray-100">${balance.toFixed(2)}</span>
-                    </div>
-                    {accountType === "Savings" && (
-                      <div className="flex justify-between">
-                        <span>Interest:</span>
-                        <span className="text-teal-400">${interestAccrued.toFixed(2)}</span>
-                      </div>
-                    )}
+                    <Badge variant={challenge.completed ? "default" : "secondary"}>
+                      {challenge.completed ? "Completed" : "In Progress"}
+                    </Badge>
                   </div>
-                </motion.div>
-              </div>
-            </div>
-          )}
+                  <Progress value={(challenge.progress / challenge.target) * 100} />
+                  <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
-          {/* End Screen */}
-          <AnimatePresence>
-            {gameStatus === "completed" && (
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-8 space-y-6"
-              >
-                <motion.div
-                  className="rounded-full bg-teal-700/30 p-6 inline-block"
-                  animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <Award className="h-16 w-16 text-gray-100" />
-                </motion.div>
-                <h3 className="text-3xl font-bold text-gray-100">Banking Done!</h3>
-                <motion.p
-                  className="text-2xl text-teal-300"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  Final Balance: ${balance.toFixed(2)}
-                </motion.p>
-                {accountType === "Savings" && (
-                  <motion.p
-                    className="text-lg text-teal-400"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    Interest Earned: ${interestAccrued.toFixed(2)}
-                  </motion.p>
-                )}
-                <motion.p
-                  className="text-lg text-gray-100"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.9 }}
-                >
-                  Final Score: {calculateRewards().finalScore}
-                </motion.p>
-                {userData && (
-                  <motion.div
-                    className="text-gray-100"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.1 }}
-                  >
-                    <p>You earned {calculateRewards().xpEarned} XP & {calculateRewards().coinsEarned} Coins!</p>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardContent>
-        <CardFooter className="flex justify-between">
+          <Card>
+            <CardHeader>
+              <CardTitle>Achievements</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {achievements.map(achievement => (
+                <div key={achievement.id} className="flex items-center space-x-4">
+                  <div className={`p-2 rounded-full ${achievement.unlocked ? "bg-green-100" : "bg-gray-100"}`}>
+                    <achievement.icon className={`h-6 w-6 ${achievement.unlocked ? "text-green-500" : "text-gray-400"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{achievement.title}</div>
+                    <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                  </div>
+                  {achievement.unlocked && (
+                    <Badge variant="default">Unlocked</Badge>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex justify-center space-x-4">
           <Button
-            variant="outline"
-            onClick={() => router.push("/dashboard/games")}
-            className="bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600"
+            onClick={() => handleSave(100)}
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
-            Back to Games
+            Save $100
           </Button>
-          {gameStatus === "completed" && (
-            <Button
-              onClick={() => {
-                setBalance(1000);
-                setAccountType(null);
-                setTransactions([]);
-                setTimeLeft(480);
-                setScore(0);
-                setInterestAccrued(0);
-                setGameStatus("not_started");
-              }}
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-teal-700 to-gray-700 text-gray-100 rounded-full shadow-lg hover:from-teal-600 hover:to-gray-600"
-            >
-              {isSubmitting ? "Saving..." : "Play Again"}
-            </Button>
-          )}
-        </CardFooter>
-      </Card>
-
-      {/* Footer Stats */}
-      {userData && (
-        <motion.div
-          className="flex justify-between text-gray-100 mt-6 w-full max-w-4xl"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <p>XP: {userData.xp + (gameStatus === "completed" ? calculateRewards().xpEarned : 0)}</p>
-          <p>Coins: {userData.coins + (gameStatus === "completed" ? calculateRewards().coinsEarned : 0)}</p>
-        </motion.div>
-      )}
+          <Button
+            onClick={() => handleInvest(100)}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            Invest $100
+          </Button>
+          <Button
+            onClick={advanceMonth}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Advance Month
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
