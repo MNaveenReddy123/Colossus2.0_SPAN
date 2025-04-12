@@ -104,20 +104,20 @@ export default function creditscorelearning() {
           height="315"
           src="https://www.youtube.com/embed/0ddgrHehprk?si=iWY86E8-Mkn6xL27"
           title="YouTube video player"
-          frameborder="0"
+          frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
         ></iframe>
         <iframe
           width="560"
           height="315"
           src="https://www.youtube.com/embed/T5UHXCrW0gI?si=J71HfWAjS8lyzfnj"
           title="YouTube video player"
-          frameborder="0"
+          frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
         ></iframe>
       </section>
 
