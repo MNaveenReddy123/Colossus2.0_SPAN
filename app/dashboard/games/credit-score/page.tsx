@@ -286,7 +286,7 @@ export default function CreditScoreGamePage() {
         "Credit Score Adventure",
         finalScore,
         xpEarned,
-        coinsEarned
+        coinsEarned,
       )
 
       if (result.success) {
@@ -294,7 +294,7 @@ export default function CreditScoreGamePage() {
         toast({
           title: "Game Completed!",
           description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
-          className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
+          className: "bg-green-600 text-white",
         })
       } else {
         throw new Error("Failed to save progress")
@@ -312,71 +312,73 @@ export default function CreditScoreGamePage() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-white">
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
           <div className="flex items-center gap-2">
-            <Link href="/dashboard/games">
-              <Button variant="outline" size="icon" className="h-8 w-8">
+            <Link href="/dashboard/games/app">
+              <Button variant="outline" size="icon" className="h-8 w-8 border-black text-black hover:bg-gray-100">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h2 className="text-3xl font-bold tracking-tight">Credit Score Adventure</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-black">Credit Score Adventure</h2>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-sm border-black text-black">
               Level 2
             </Badge>
           </div>
         </div>
 
         {gameState === "start" && (
-          <Card>
+          <Card className="border-gray-200">
             <CardHeader>
-              <CardTitle>Welcome to Credit Score Adventure!</CardTitle>
-              <CardDescription>Make smart financial decisions to improve your credit score</CardDescription>
+              <CardTitle className="text-black">Welcome to Credit Score Adventure!</CardTitle>
+              <CardDescription className="text-gray-600">
+                Make smart financial decisions to improve your credit score
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="rounded-lg border p-4">
-                <h3 className="text-lg font-medium">How to Play</h3>
-                <ul className="mt-2 space-y-2 text-sm">
+              <div className="rounded-lg border border-gray-200 p-4">
+                <h3 className="text-lg font-medium text-black">How to Play</h3>
+                <ul className="mt-2 space-y-2 text-sm text-gray-600">
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>You'll be presented with real-life financial scenarios</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>Choose the best option to improve your credit score</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>Bad decisions will cost you lives - you have 3 lives total</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>Try to reach the highest credit score possible!</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="rounded-lg border p-4">
-                <h3 className="text-lg font-medium">Level 2: Credit Management</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+              <div className="rounded-lg border border-gray-200 p-4">
+                <h3 className="text-lg font-medium text-black">Level 2: Credit Management</h3>
+                <p className="mt-2 text-sm text-gray-600">
                   In this level, you'll learn about managing credit cards, loans, and how different actions affect your
                   credit score. Make smart choices to build excellent credit!
                 </p>
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={handleStart} className="w-full">
+              <Button onClick={handleStart} className="w-full bg-black text-white hover:bg-gray-800">
                 Start Game
               </Button>
             </CardFooter>
@@ -384,26 +386,26 @@ export default function CreditScoreGamePage() {
         )}
 
         {gameState === "playing" && (
-          <Card>
+          <Card className="border-gray-200">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>
+                  <CardTitle className="text-black">
                     Scenario {currentScenario + 1} of {scenarios.length}
                   </CardTitle>
-                  <CardDescription>{scenarios[currentScenario].title}</CardDescription>
+                  <CardDescription className="text-gray-600">{scenarios[currentScenario].title}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex">
                     {Array.from({ length: 3 }).map((_, i) => (
                       <Heart
                         key={i}
-                        className={`h-5 w-5 ${i < lives ? "text-red-500 fill-red-500" : "text-muted-foreground"}`}
+                        className={`h-5 w-5 ${i < lives ? "text-red-500 fill-red-500" : "text-gray-300"}`}
                       />
                     ))}
                   </div>
-                  <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm">
+                    <CreditCard className="h-4 w-4 text-gray-500" />
                     <span className={getScoreColor()}>{score}</span>
                   </div>
                 </div>
@@ -411,32 +413,33 @@ export default function CreditScoreGamePage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm text-black">
                   <span>Progress</span>
                   <span>{Math.round((currentScenario / scenarios.length) * 100)}%</span>
                 </div>
-                <Progress value={(currentScenario / scenarios.length) * 100} className="h-2" />
+                <Progress value={(currentScenario / scenarios.length) * 100} className="h-2 bg-gray-200" />
               </div>
 
-              <div className="rounded-lg border p-4">
-                <p className="text-sm">{scenarios[currentScenario].description}</p>
+              <div className="rounded-lg border border-gray-200 p-4">
+                <p className="text-sm text-black">{scenarios[currentScenario].description}</p>
               </div>
 
               <div className="space-y-3">
                 {scenarios[currentScenario].options.map((option) => (
                   <button
                     key={option.id}
-                    className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${selectedOption?.id === option.id
-                      ? option.impact >= 0
-                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                        : "border-red-500 bg-red-50 dark:bg-red-900/20"
-                      : ""
-                      }`}
+                    className={`w-full rounded-lg border border-gray-200 p-3 text-left transition-colors hover:bg-gray-50 ${
+                      selectedOption?.id === option.id
+                        ? option.impact >= 0
+                          ? "border-green-500 bg-green-50"
+                          : "border-red-500 bg-red-50"
+                        : ""
+                    }`}
                     onClick={() => handleOptionSelect(option)}
                     disabled={selectedOption !== null}
                   >
                     <div className="flex items-center justify-between">
-                      <span>{option.text}</span>
+                      <span className="text-black">{option.text}</span>
                       {selectedOption?.id === option.id &&
                         (option.impact >= 0 ? (
                           <CheckCircle className="h-5 w-5 text-green-500" />
@@ -450,10 +453,9 @@ export default function CreditScoreGamePage() {
 
               {feedback && selectedOption && (
                 <div
-                  className={`rounded-md p-3 ${selectedOption.impact >= 0
-                    ? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                    }`}
+                  className={`rounded-md p-3 ${
+                    selectedOption.impact >= 0 ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
+                  }`}
                 >
                   <div className="flex items-start gap-2">
                     {selectedOption.impact >= 0 ? (
@@ -479,10 +481,10 @@ export default function CreditScoreGamePage() {
         )}
 
         {gameState === "result" && (
-          <Card>
+          <Card className="border-gray-200">
             <CardHeader>
-              <CardTitle>{gameCompleted ? "Level Complete!" : "Game Over"}</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-black">{gameCompleted ? "Level Complete!" : "Game Over"}</CardTitle>
+              <CardDescription className="text-gray-600">
                 {gameCompleted
                   ? "You've successfully completed Level 2 of Credit Score Adventure!"
                   : "You've run out of lives. Better luck next time!"}
@@ -490,34 +492,34 @@ export default function CreditScoreGamePage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col items-center justify-center space-y-4 py-6">
-                <div className="rounded-full bg-primary/10 p-4">
-                  <Award className="h-12 w-12 text-primary" />
+                <div className="rounded-full bg-gray-100 p-4">
+                  <Award className="h-12 w-12 text-green-600" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-xl font-bold">
+                  <h3 className="text-xl font-bold text-black">
                     Final Credit Score: <span className={getScoreColor()}>{score}</span>
                   </h3>
-                  <p className="text-muted-foreground">Credit Rating: {getScoreCategory()}</p>
+                  <p className="text-gray-600">Credit Rating: {getScoreCategory()}</p>
                   {gameCompleted && (
-                    <p className="mt-2 text-muted-foreground">
+                    <p className="mt-2 text-gray-600">
                       You've earned {getReward().xp} XP and {getReward().coins} Coins!
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-lg border p-4">
-                <h3 className="text-lg font-medium">Credit Score Breakdown</h3>
+              <div className="rounded-lg border border-gray-200 p-4">
+                <h3 className="text-lg font-medium text-black">Credit Score Breakdown</h3>
                 <div className="mt-4 space-y-2">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-black">
                     <span>Starting Score:</span>
                     <span className="font-medium">650</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-black">
                     <span>Final Score:</span>
                     <span className={`font-medium ${getScoreColor()}`}>{score}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-black">
                     <span>Change:</span>
                     <span className={`font-medium ${score - 650 >= 0 ? "text-green-600" : "text-red-600"}`}>
                       {score - 650 >= 0 ? "+" : ""}
@@ -527,32 +529,32 @@ export default function CreditScoreGamePage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border p-4">
-                <h3 className="text-lg font-medium">Key Takeaways</h3>
-                <ul className="mt-2 space-y-2 text-sm">
+              <div className="rounded-lg border border-gray-200 p-4">
+                <h3 className="text-lg font-medium text-black">Key Takeaways</h3>
+                <ul className="mt-2 space-y-2 text-sm text-gray-600">
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>
                       Always pay your bills on time - payment history is the biggest factor in your credit score
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>Keep your credit utilization low - aim for less than 30% of your available credit</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>Don't apply for too many credit accounts at once - this can lower your score</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="rounded-full bg-primary/10 p-1 mt-0.5">
-                      <CreditCard className="h-3 w-3 text-primary" />
+                    <div className="rounded-full bg-black/10 p-1 mt-0.5">
+                      <CreditCard className="h-3 w-3 text-black" />
                     </div>
                     <span>Keep old accounts open to maintain a longer credit history</span>
                   </li>
@@ -560,15 +562,17 @@ export default function CreditScoreGamePage() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={handleStart}>
+              <Button variant="outline" onClick={handleStart} className="border-black text-black hover:bg-gray-100">
                 Play Again
               </Button>
               {gameCompleted ? (
-                <Link href="/dashboard/games">
-                  <Button>Back to Games</Button>
+                <Link href="/dashboard/games/app">
+                  <Button className="bg-black text-white hover:bg-gray-800">Back to Games</Button>
                 </Link>
               ) : (
-                <Button onClick={handleStart}>Try Again</Button>
+                <Button onClick={handleStart} className="bg-black text-white hover:bg-gray-800">
+                  Try Again
+                </Button>
               )}
             </CardFooter>
           </Card>

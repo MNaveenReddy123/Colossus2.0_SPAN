@@ -34,7 +34,6 @@ import {
   Settings,
   User,
   ChevronRight,
-  Sparkles,
   Zap,
   Flame,
   Gift,
@@ -45,7 +44,10 @@ import { useAuth } from "@/contexts/auth-context"
 import { useCachedUserData } from "@/hooks/use-cached-user-data"
 
 // Import the custom theme
-import "@/styles/dashboard-theme.css"
+// Change from:
+// import "@/styles/dashboard-theme.css"
+// To:
+import "@/styles/dashboard-theme-light.css"
 
 // Activity type definition
 type ActivityType = {
@@ -73,7 +75,7 @@ const AnimatedProgressBar = ({ value = 0, className = "" }: { value: number; cla
 
   return (
     <div className={`progress-bar ${className}`}>
-      <div className="progress-bar-fill" style={{ width: `${width}%` }} />
+      <div className="progress-bar-fill bg-green-600" style={{ width: `${width}%` }} />
     </div>
   )
 }
@@ -82,7 +84,7 @@ const AnimatedProgressBar = ({ value = 0, className = "" }: { value: number; cla
 const ActivityPerformanceChart = ({ activities }: { activities: ActivityType[] }) => {
   if (!activities || activities.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gradient-border p-4">
+      <div className="flex flex-col items-center justify-center h-64 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <LineChart className="h-16 w-16 text-muted-foreground/50" />
         <p className="text-muted-foreground mt-4">Complete activities to see your performance trends</p>
       </div>
@@ -95,9 +97,9 @@ const ActivityPerformanceChart = ({ activities }: { activities: ActivityType[] }
     .slice(-5)
 
   return (
-    <div className="h-64 gradient-border p-4 chart-container">
+    <div className="h-64 bg-white border border-gray-200 rounded-lg p-4 shadow-sm chart-container">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-medium">Performance Trend</h3>
+        <h3 className="text-sm font-medium text-black">Performance Trend</h3>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -127,8 +129,8 @@ const ActivityPerformanceChart = ({ activities }: { activities: ActivityType[] }
                 style={{
                   height: `${heightPercentage}%`,
                   background: `linear-gradient(180deg, 
-                    hsl(var(--dashboard-primary)) 0%, 
-                    hsl(var(--dashboard-secondary)) 100%)`,
+  #10b981 0%, 
+  #059669 100%)`,
                 }}
               ></div>
               <div className="w-full text-center mt-2">
@@ -150,7 +152,7 @@ const ActivityPerformanceChart = ({ activities }: { activities: ActivityType[] }
 const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
   if (!activities || activities.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gradient-border p-4">
+      <div className="flex flex-col items-center justify-center h-64 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <PieChart className="h-16 w-16 text-muted-foreground/50" />
         <p className="text-muted-foreground mt-4">Complete activities to see your distribution</p>
       </div>
@@ -174,9 +176,9 @@ const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
   const circumference = 2 * Math.PI * 40 // radius is 40
 
   return (
-    <div className="h-64 gradient-border p-4 chart-container">
+    <div className="h-64 bg-white border border-gray-200 rounded-lg p-4 shadow-sm chart-container">
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-medium">Activity Distribution</h3>
+        <h3 className="text-sm font-medium text-black">Activity Distribution</h3>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -199,7 +201,7 @@ const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
               cy="50"
               r="40"
               fill="transparent"
-              stroke="hsl(326, 100%, 74%)" // Secondary color
+              stroke="#10b981" // Secondary color
               strokeWidth="15"
               strokeDasharray={circumference}
               strokeDashoffset={(1 - counts.quiz / total) * circumference}
@@ -210,7 +212,7 @@ const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
               cy="50"
               r="40"
               fill="transparent"
-              stroke="hsl(263, 90%, 51%)" // Primary color
+              stroke="#059669" // Primary color
               strokeWidth="15"
               strokeDasharray={circumference}
               strokeDashoffset={(1 - counts.game / total) * circumference}
@@ -227,7 +229,7 @@ const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
               cy="50"
               r="40"
               fill="transparent"
-              stroke="hsl(191, 97%, 77%)" // Accent color
+              stroke="#34d399" // Accent color
               strokeWidth="15"
               strokeDasharray={circumference}
               strokeDashoffset={(1 - counts.simulation / total) * circumference}
@@ -249,15 +251,15 @@ const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
 
       <div className="flex justify-around mt-2">
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-[hsl(326,100%,74%)] mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-green-600 mr-1"></div>
           <span className="text-xs">Quiz ({quizPercentage}%)</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-[hsl(263,90%,51%)] mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-green-700 mr-1"></div>
           <span className="text-xs">Game ({gamePercentage}%)</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-[hsl(191,97%,77%)] mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-green-400 mr-1"></div>
           <span className="text-xs">Sim ({simulationPercentage}%)</span>
         </div>
       </div>
@@ -269,7 +271,7 @@ const ActivityTypeDonut = ({ activities }: { activities: ActivityType[] }) => {
 const ResourcesTrendChart = ({ activities }: { activities: ActivityType[] }) => {
   if (!activities || activities.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gradient-border p-4">
+      <div className="flex flex-col items-center justify-center h-64 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <BarChart3 className="h-16 w-16 text-muted-foreground/50" />
         <p className="text-muted-foreground mt-4">Complete activities to see your resources trend</p>
       </div>
@@ -287,9 +289,9 @@ const ResourcesTrendChart = ({ activities }: { activities: ActivityType[] }) => 
   const maxValue = Math.max(maxXp, maxCoins)
 
   return (
-    <div className="h-64 gradient-border p-4 chart-container">
+    <div className="h-64 bg-white border border-gray-200 rounded-lg p-4 shadow-sm chart-container">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-medium">XP & Coins Earned</h3>
+        <h3 className="text-sm font-medium text-black">XP & Coins Earned</h3>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -320,7 +322,7 @@ const ResourcesTrendChart = ({ activities }: { activities: ActivityType[] }) => 
                   className="w-full rounded-t-sm glow-effect"
                   style={{
                     height: `${xpHeightPercentage}%`,
-                    background: "hsl(263, 90%, 51%)", // Primary color
+                    background: "#059669", // Primary color
                   }}
                 ></div>
               </div>
@@ -333,7 +335,7 @@ const ResourcesTrendChart = ({ activities }: { activities: ActivityType[] }) => 
                   className="w-full rounded-t-sm glow-effect"
                   style={{
                     height: `${coinsHeightPercentage}%`,
-                    background: "hsl(38, 92%, 50%)", // Warning color
+                    background: "#10b981", // Warning color
                   }}
                 ></div>
               </div>
@@ -344,11 +346,11 @@ const ResourcesTrendChart = ({ activities }: { activities: ActivityType[] }) => 
 
       <div className="flex justify-around mt-2">
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-[hsl(263,90%,51%)] mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-green-700 mr-1"></div>
           <span className="text-xs">XP</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-[hsl(38,92%,50%)] mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
           <span className="text-xs">Coins</span>
         </div>
       </div>
@@ -360,7 +362,7 @@ const ResourcesTrendChart = ({ activities }: { activities: ActivityType[] }) => 
 const ActivityHeatmap = ({ activities }: { activities: ActivityType[] }) => {
   if (!activities || activities.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 gradient-border p-4">
+      <div className="flex flex-col items-center justify-center h-32 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <Calendar className="h-12 w-12 text-muted-foreground/50" />
         <p className="text-muted-foreground mt-2 text-sm">Complete activities to see your activity calendar</p>
       </div>
@@ -396,9 +398,9 @@ const ActivityHeatmap = ({ activities }: { activities: ActivityType[] }) => {
   const maxActivities = Math.max(...Array.from(activityMap.values()), 1)
 
   return (
-    <div className="h-32 gradient-border p-4">
+    <div className="h-32 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-medium">Activity Calendar</h3>
+        <h3 className="text-sm font-medium text-black">Activity Calendar</h3>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -426,9 +428,9 @@ const ActivityHeatmap = ({ activities }: { activities: ActivityType[] }) => {
                   background:
                     count > 0
                       ? `linear-gradient(135deg, 
-                        hsla(var(--dashboard-primary), ${0.4 + intensity * 0.6}), 
-                        hsla(var(--dashboard-secondary), ${0.4 + intensity * 0.6}))`
-                      : "hsla(var(--dashboard-muted), 0.3)",
+      rgba(16, 185, 129, ${0.4 + intensity * 0.6}), 
+      rgba(5, 150, 105, ${0.4 + intensity * 0.6}))`
+                      : "rgba(229, 231, 235, 0.3)",
                 }}
               >
                 <span className="text-xs font-medium">{count}</span>
@@ -501,10 +503,10 @@ const AchievementProgressCard = ({ userData, activities }: { userData: any; acti
   ]
 
   return (
-    <div className="gradient-card p-4 rounded-lg">
+    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold gradient-heading">Achievement Progress</h3>
-        <Badge className="bg-[hsl(var(--dashboard-secondary))] text-white">
+        <h3 className="text-lg font-bold text-black">Achievement Progress</h3>
+        <Badge className="bg-green-600 text-white">
           {achievements.filter((a) => a.completed).length}/{achievements.length}
         </Badge>
       </div>
@@ -513,9 +515,7 @@ const AchievementProgressCard = ({ userData, activities }: { userData: any; acti
           <div key={achievement.id} className="space-y-1">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <div
-                  className={`p-1 rounded-full ${achievement.completed ? "bg-[hsl(var(--dashboard-secondary))]" : "bg-muted"}`}
-                >
+                <div className={`p-1 rounded-full ${achievement.completed ? "bg-green-600" : "bg-muted"}`}>
                   {achievement.icon}
                 </div>
                 <span className="text-sm font-medium">{achievement.name}</span>
@@ -579,12 +579,10 @@ const UserStatsCard = ({ userData, activities }: { userData: any; activities: Ac
   }
 
   return (
-    <div className="gradient-card p-4 rounded-lg">
+    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold gradient-heading">User Statistics</h3>
-        <Badge className="bg-[hsl(var(--dashboard-primary))] text-white">
-          Level {Math.floor(userData.xp / 100) + 1}
-        </Badge>
+        <h3 className="text-lg font-bold text-black">User Statistics</h3>
+        <Badge className="bg-green-600 text-white">Level {Math.floor(userData.xp / 100) + 1}</Badge>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-3">
@@ -655,8 +653,8 @@ const UserStatsCard = ({ userData, activities }: { userData: any; activities: Ac
 const RecentActivitiesCard = ({ activities }: { activities: ActivityType[] }) => {
   if (!activities || activities.length === 0) {
     return (
-      <div className="gradient-card p-4 rounded-lg">
-        <h3 className="text-lg font-bold gradient-heading mb-4">Recent Activities</h3>
+      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <h3 className="text-lg font-bold text-black mb-4">Recent Activities</h3>
         <div className="flex flex-col items-center justify-center py-8">
           <Activity className="h-12 w-12 text-muted-foreground/50" />
           <p className="text-muted-foreground mt-4">No activities yet. Start your learning journey!</p>
@@ -666,8 +664,8 @@ const RecentActivitiesCard = ({ activities }: { activities: ActivityType[] }) =>
   }
 
   return (
-    <div className="gradient-card p-4 rounded-lg">
-      <h3 className="text-lg font-bold gradient-heading mb-4">Recent Activities</h3>
+    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+      <h3 className="text-lg font-bold text-black mb-4">Recent Activities</h3>
       <div className="space-y-3">
         {activities.slice(0, 5).map((activity) => (
           <div
@@ -685,15 +683,9 @@ const RecentActivitiesCard = ({ activities }: { activities: ActivityType[] }) =>
                       : "hsla(var(--dashboard-accent), 0.2)",
               }}
             >
-              {activity.activity_type === "quiz" && (
-                <BookOpen className="h-4 w-4 text-[hsl(var(--dashboard-secondary))]" />
-              )}
-              {activity.activity_type === "game" && (
-                <Gamepad2 className="h-4 w-4 text-[hsl(var(--dashboard-primary))]" />
-              )}
-              {activity.activity_type === "simulation" && (
-                <Activity className="h-4 w-4 text-[hsl(var(--dashboard-accent))]" />
-              )}
+              {activity.activity_type === "quiz" && <BookOpen className="h-4 w-4 text-green-700" />}
+              {activity.activity_type === "game" && <Gamepad2 className="h-4 w-4 text-green-600" />}
+              {activity.activity_type === "simulation" && <Activity className="h-4 w-4 text-green-500" />}
             </div>
             <div className="flex-1 space-y-1">
               <div className="flex justify-between">
@@ -701,10 +693,10 @@ const RecentActivitiesCard = ({ activities }: { activities: ActivityType[] }) =>
                 <Badge
                   className={
                     activity.activity_type === "quiz"
-                      ? "bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]"
+                      ? "bg-green-100 text-green-800"
                       : activity.activity_type === "game"
-                        ? "bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]"
-                        : "bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-green-100 text-green-800"
                   }
                 >
                   {activity.activity_type.charAt(0).toUpperCase() + activity.activity_type.slice(1)}
@@ -729,10 +721,7 @@ const RecentActivitiesCard = ({ activities }: { activities: ActivityType[] }) =>
       </div>
       <div className="mt-4">
         <Link href="/dashboard/activities">
-          <Button
-            variant="outline"
-            className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-primary),0.1)]"
-          >
+          <Button variant="outline" className="w-full border-gray-300 hover:bg-gray-100 text-black">
             View All Activities
             <ChevronRight className="ml-2 h-4 w-4" />
           </Button>
@@ -817,9 +806,7 @@ const RecommendationsCard = ({ userData, activities }: { userData: any; activiti
     })
   }
 
-  return (
-   <Suggestions/>
-  )
+  return <Suggestions />
 }
 
 // Main dashboard page component
@@ -835,9 +822,13 @@ export default function UserDashboardPage() {
     return (
       <div className="dashboard-theme flex min-h-screen items-center justify-center animated-bg">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-[hsl(var(--dashboard-primary))]" />
+          <Loader2 className="h-12 w-12 animate-spin text-green-600" />
           <p className="text-lg font-medium">Loading your dashboard...</p>
-          <Button variant="outline" onClick={() => router.push("/dashboard")} className="mt-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard")}
+            className="w-full border-gray-300 hover:bg-gray-100 text-black mt-4"
+          >
             Return to Standard Dashboard
           </Button>
         </div>
@@ -850,24 +841,18 @@ export default function UserDashboardPage() {
   const xpProgress = (currentLevelXp / 100) * 100
 
   return (
-    <div className="dashboard-theme min-h-screen">
+    <div className="bg-white min-h-screen">
       <div className="flex flex-col">
-        <header className="border-b border-[hsla(var(--dashboard-border),0.5)] bg-[hsla(var(--dashboard-card),0.8)] backdrop-blur-sm sticky top-0 z-10">
+        <header className="border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold gradient-heading">Financial Analytics</h1>
+                <h1 className="text-2xl font-bold text-black">Financial Analytics</h1>
                 <div className="hidden md:flex items-center space-x-1">
-                  <Badge
-                    variant="outline"
-                    className="bg-[hsla(var(--dashboard-primary),0.1)] text-[hsl(var(--dashboard-primary))]"
-                  >
+                  <Badge variant="outline" className="bg-green-100 text-green-800">
                     Level {level}
                   </Badge>
-                  <Badge
-                    variant="outline"
-                    className="bg-[hsla(var(--dashboard-secondary),0.1)] text-[hsl(var(--dashboard-secondary))]"
-                  >
+                  <Badge variant="outline" className="bg-green-100 text-green-800">
                     {userData.xp} XP
                   </Badge>
                 </div>
@@ -877,12 +862,7 @@ export default function UserDashboardPage() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={refreshData}
-                        className="border-[hsla(var(--dashboard-border),0.5)]"
-                      >
+                      <Button variant="outline" size="sm" onClick={refreshData} className="border-gray-300">
                         <RefreshCw className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
@@ -897,7 +877,7 @@ export default function UserDashboardPage() {
                   </Tooltip>
                 </TooltipProvider>
 
-                <Button className="bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]">
+                <Button className="bg-black text-white hover:bg-gray-800">
                   <Wallet className="mr-2 h-4 w-4" />
                   <span>{userData.coins} Coins</span>
                 </Button>
@@ -909,7 +889,7 @@ export default function UserDashboardPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => router.push("/dashboard")}
-                        className="border-[hsla(var(--dashboard-border),0.5)]"
+                        className="border-gray-300"
                       >
                         <Home className="h-4 w-4" />
                       </Button>
@@ -959,31 +939,31 @@ export default function UserDashboardPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="bg-[hsla(var(--dashboard-muted),0.5)] p-1">
+            <TabsList className="bg-gray-100 p-1">
               <TabsTrigger
                 value="overview"
-                className="data-[state=active]:bg-[hsla(var(--dashboard-primary),0.2)] data-[state=active]:text-[hsl(var(--dashboard-primary))]"
+                className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800"
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="activities"
-                className="data-[state=active]:bg-[hsla(var(--dashboard-secondary),0.2)] data-[state=active]:text-[hsl(var(--dashboard-secondary))]"
+                className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800"
               >
                 <Activity className="h-4 w-4 mr-2" />
                 Activities
               </TabsTrigger>
               <TabsTrigger
                 value="achievements"
-                className="data-[state=active]:bg-[hsla(var(--dashboard-accent),0.2)] data-[state=active]:text-[hsl(var(--dashboard-accent))]"
+                className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800"
               >
                 <Trophy className="h-4 w-4 mr-2" />
                 Achievements
               </TabsTrigger>
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-[hsla(var(--dashboard-info),0.2)] data-[state=active]:text-[hsl(var(--dashboard-info))]"
+                className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800"
               >
                 <User className="h-4 w-4 mr-2" />
                 Profile
@@ -993,13 +973,13 @@ export default function UserDashboardPage() {
             <TabsContent value="overview" className="space-y-6">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-[hsl(var(--dashboard-primary))]" />
+                  <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                   <span className="ml-2">Loading analytics...</span>
                 </div>
               ) : (
                 <>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="gradient-card p-4 rounded-lg stat-card">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm stat-card">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-sm text-muted-foreground">Current Level</p>
@@ -1015,7 +995,7 @@ export default function UserDashboardPage() {
                       </p>
                     </div>
 
-                    <div className="gradient-card p-4 rounded-lg stat-card">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm stat-card">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-sm text-muted-foreground">Wallet Balance</p>
@@ -1036,7 +1016,7 @@ export default function UserDashboardPage() {
                       </p>
                     </div>
 
-                    <div className="gradient-card p-4 rounded-lg stat-card">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm stat-card">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-sm text-muted-foreground">Total XP</p>
@@ -1057,7 +1037,7 @@ export default function UserDashboardPage() {
                       </p>
                     </div>
 
-                    <div className="gradient-card p-4 rounded-lg stat-card">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm stat-card">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-sm text-muted-foreground">Activities Completed</p>
@@ -1093,11 +1073,11 @@ export default function UserDashboardPage() {
             </TabsContent>
 
             <TabsContent value="activities" className="space-y-6">
-              <div className="gradient-card p-4 rounded-lg">
-                <h3 className="text-lg font-bold gradient-heading mb-4">Activity History</h3>
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-bold text-black mb-4">Activity History</h3>
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-[hsl(var(--dashboard-primary))]" />
+                    <Loader2 className="h-6 w-6 animate-spin text-green-600" />
                     <span className="ml-2">Loading activities...</span>
                   </div>
                 ) : activities.length === 0 ? (
@@ -1105,7 +1085,7 @@ export default function UserDashboardPage() {
                     <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                     <p>No activities yet. Start playing games, taking quizzes, or trying simulations!</p>
                     <Button
-                      className="mt-4 bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]"
+                      className="bg-black text-white hover:bg-gray-800 mt-4"
                       onClick={() => router.push("/dashboard/games")}
                     >
                       <Gamepad2 className="mr-2 h-4 w-4" />
@@ -1130,15 +1110,9 @@ export default function UserDashboardPage() {
                                   : "hsla(var(--dashboard-accent), 0.2)",
                           }}
                         >
-                          {activity.activity_type === "quiz" && (
-                            <BookOpen className="h-4 w-4 text-[hsl(var(--dashboard-secondary))]" />
-                          )}
-                          {activity.activity_type === "game" && (
-                            <Gamepad2 className="h-4 w-4 text-[hsl(var(--dashboard-primary))]" />
-                          )}
-                          {activity.activity_type === "simulation" && (
-                            <Activity className="h-4 w-4 text-[hsl(var(--dashboard-accent))]" />
-                          )}
+                          {activity.activity_type === "quiz" && <BookOpen className="h-4 w-4 text-green-700" />}
+                          {activity.activity_type === "game" && <Gamepad2 className="h-4 w-4 text-green-600" />}
+                          {activity.activity_type === "simulation" && <Activity className="h-4 w-4 text-green-500" />}
                         </div>
                         <div className="flex-1 space-y-1">
                           <div className="flex justify-between">
@@ -1146,10 +1120,10 @@ export default function UserDashboardPage() {
                             <Badge
                               className={
                                 activity.activity_type === "quiz"
-                                  ? "bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]"
+                                  ? "bg-green-100 text-green-800"
                                   : activity.activity_type === "game"
-                                    ? "bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]"
-                                    : "bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-green-100 text-green-800"
                               }
                             >
                               {activity.activity_type.charAt(0).toUpperCase() + activity.activity_type.slice(1)}
@@ -1176,9 +1150,9 @@ export default function UserDashboardPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="gradient-card p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                   <div className="flex items-center mb-4">
-                    <Gamepad2 className="h-5 w-5 mr-2 text-[hsl(var(--dashboard-primary))]" />
+                    <Gamepad2 className="h-5 w-5 mr-2 text-green-600" />
                     <h3 className="text-lg font-bold">Games</h3>
                   </div>
                   <div className="space-y-3">
@@ -1186,10 +1160,7 @@ export default function UserDashboardPage() {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium">Tax Rush</h4>
-                          <Badge
-                            variant="outline"
-                            className="bg-[hsla(var(--dashboard-primary),0.1)] text-[hsl(var(--dashboard-primary))]"
-                          >
+                          <Badge variant="outline" className="bg-green-100 text-green-800">
                             New
                           </Badge>
                         </div>
@@ -1199,10 +1170,7 @@ export default function UserDashboardPage() {
                             <Clock className="h-3 w-3" /> 10 min
                           </div>
                           <Link href="/dashboard/games/tax-rush">
-                            <Button
-                              size="sm"
-                              className="bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]"
-                            >
+                            <Button size="sm" className="bg-black text-white hover:bg-gray-800">
                               Play
                             </Button>
                           </Link>
@@ -1210,10 +1178,7 @@ export default function UserDashboardPage() {
                       </div>
                     </div>
                     <Link href="/dashboard/games">
-                      <Button
-                        variant="outline"
-                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-primary),0.1)]"
-                      >
+                      <Button variant="outline" className="w-full border-gray-300 hover:bg-gray-100 text-black">
                         View All Games
                         <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -1221,9 +1186,9 @@ export default function UserDashboardPage() {
                   </div>
                 </div>
 
-                <div className="gradient-card p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                   <div className="flex items-center mb-4">
-                    <BookOpen className="h-5 w-5 mr-2 text-[hsl(var(--dashboard-secondary))]" />
+                    <BookOpen className="h-5 w-5 mr-2 text-green-700" />
                     <h3 className="text-lg font-bold">Quizzes</h3>
                   </div>
                   <div className="space-y-3">
@@ -1231,10 +1196,7 @@ export default function UserDashboardPage() {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium">Budgeting Basics</h4>
-                          <Badge
-                            variant="outline"
-                            className="bg-[hsla(var(--dashboard-secondary),0.1)] text-[hsl(var(--dashboard-secondary))]"
-                          >
+                          <Badge variant="outline" className="bg-green-100 text-green-800">
                             Popular
                           </Badge>
                         </div>
@@ -1244,10 +1206,7 @@ export default function UserDashboardPage() {
                             <Clock className="h-3 w-3" /> 5 min
                           </div>
                           <Link href="/dashboard/quizzes/budgeting">
-                            <Button
-                              size="sm"
-                              className="bg-[hsl(var(--dashboard-secondary))] hover:bg-[hsla(var(--dashboard-secondary),0.8)]"
-                            >
+                            <Button size="sm" className="bg-black text-white hover:bg-gray-800">
                               Take Quiz
                             </Button>
                           </Link>
@@ -1255,10 +1214,7 @@ export default function UserDashboardPage() {
                       </div>
                     </div>
                     <Link href="/dashboard/quizzes">
-                      <Button
-                        variant="outline"
-                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-secondary),0.1)]"
-                      >
+                      <Button variant="outline" className="w-full border-gray-300 hover:bg-gray-100 text-black">
                         View All Quizzes
                         <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -1266,9 +1222,9 @@ export default function UserDashboardPage() {
                   </div>
                 </div>
 
-                <div className="gradient-card p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                   <div className="flex items-center mb-4">
-                    <Activity className="h-5 w-5 mr-2 text-[hsl(var(--dashboard-accent))]" />
+                    <Activity className="h-5 w-5 mr-2 text-green-500" />
                     <h3 className="text-lg font-bold">Simulations</h3>
                   </div>
                   <div className="space-y-3">
@@ -1276,10 +1232,7 @@ export default function UserDashboardPage() {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium">Investment Simulation</h4>
-                          <Badge
-                            variant="outline"
-                            className="bg-[hsla(var(--dashboard-accent),0.1)] text-[hsl(var(--dashboard-accent))]"
-                          >
+                          <Badge variant="outline" className="bg-green-100 text-green-800">
                             Advanced
                           </Badge>
                         </div>
@@ -1289,10 +1242,7 @@ export default function UserDashboardPage() {
                             <Clock className="h-3 w-3" /> 15 min
                           </div>
                           <Link href="/dashboard/simulations/investment">
-                            <Button
-                              size="sm"
-                              className="bg-[hsl(var(--dashboard-accent))] hover:bg-[hsla(var(--dashboard-accent),0.8)]"
-                            >
+                            <Button size="sm" className="bg-black text-white hover:bg-gray-800">
                               Start
                             </Button>
                           </Link>
@@ -1300,10 +1250,7 @@ export default function UserDashboardPage() {
                       </div>
                     </div>
                     <Link href="/dashboard/simulations">
-                      <Button
-                        variant="outline"
-                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-accent),0.1)]"
-                      >
+                      <Button variant="outline" className="w-full border-gray-300 hover:bg-gray-100 text-black">
                         View All Simulations
                         <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -1316,76 +1263,64 @@ export default function UserDashboardPage() {
             <TabsContent value="achievements" className="space-y-6">
               <AchievementProgressCard userData={userData} activities={activities} />
 
-              <div className="gradient-card p-4 rounded-lg">
-                <h3 className="text-lg font-bold gradient-heading mb-4">Badges</h3>
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-bold text-black mb-4">Badges</h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                   <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-secondary),0.2)]">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                       <Award className="h-8 w-8 text-[hsl(var(--dashboard-secondary))]" />
                     </div>
                     <span className="text-sm font-medium">First Login</span>
-                    <Badge className="bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]">
-                      Earned
-                    </Badge>
+                    <Badge className="bg-green-600 text-white">Earned</Badge>
                   </div>
 
                   {userData.xp >= 100 && (
                     <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-primary),0.2)]">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                         <TrendingUp className="h-8 w-8 text-[hsl(var(--dashboard-primary))]" />
                       </div>
                       <span className="text-sm font-medium">Level Up</span>
-                      <Badge className="bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]">
-                        Earned
-                      </Badge>
+                      <Badge className="bg-green-600 text-white">Earned</Badge>
                     </div>
                   )}
 
                   {activities.some((a) => a.activity_type === "quiz") && (
                     <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-accent),0.2)]">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                         <BookOpen className="h-8 w-8 text-[hsl(var(--dashboard-accent))]" />
                       </div>
                       <span className="text-sm font-medium">Quiz Taker</span>
-                      <Badge className="bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]">
-                        Earned
-                      </Badge>
+                      <Badge className="bg-green-600 text-white">Earned</Badge>
                     </div>
                   )}
 
                   {activities.some((a) => a.activity_type === "game") && (
                     <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-info),0.2)]">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                         <Gamepad2 className="h-8 w-8 text-[hsl(var(--dashboard-info))]" />
                       </div>
                       <span className="text-sm font-medium">Game Player</span>
-                      <Badge className="bg-[hsla(var(--dashboard-info),0.2)] text-[hsl(var(--dashboard-info))]">
-                        Earned
-                      </Badge>
+                      <Badge className="bg-green-600 text-white">Earned</Badge>
                     </div>
                   )}
 
                   {userData.coins >= 100 && (
                     <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-warning),0.2)]">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                         <Wallet className="h-8 w-8 text-[hsl(var(--dashboard-warning))]" />
                       </div>
                       <span className="text-sm font-medium">Saver</span>
-                      <Badge className="bg-[hsla(var(--dashboard-warning),0.2)] text-[hsl(var(--dashboard-warning))]">
-                        Earned
-                      </Badge>
+                      <Badge className="bg-green-600 text-white">Earned</Badge>
                     </div>
                   )}
 
                   {activities.some((a) => a.score === 100) && (
                     <div className="flex flex-col items-center gap-2 p-4 border border-[hsla(var(--dashboard-border),0.5)] rounded-lg glow-effect">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsla(var(--dashboard-success),0.2)]">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                         <Target className="h-8 w-8 text-[hsl(var(--dashboard-success))]" />
                       </div>
                       <span className="text-sm font-medium">Perfect Score</span>
-                      <Badge className="bg-[hsla(var(--dashboard-success),0.2)] text-[hsl(var(--dashboard-success))]">
-                        Earned
-                      </Badge>
+                      <Badge className="bg-green-600 text-white">Earned</Badge>
                     </div>
                   )}
 
@@ -1418,23 +1353,19 @@ export default function UserDashboardPage() {
 
             <TabsContent value="profile" className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="gradient-card p-4 rounded-lg">
-                  <h3 className="text-lg font-bold gradient-heading mb-4">User Profile</h3>
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-black mb-4">User Profile</h3>
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-20 w-20 rounded-full bg-[hsla(var(--dashboard-primary),0.2)] flex items-center justify-center">
-                        <User className="h-10 w-10 text-[hsl(var(--dashboard-primary))]" />
+                      <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center">
+                        <User className="h-10 w-10 text-green-600" />
                       </div>
                       <div>
                         <h4 className="text-xl font-bold">{userData.name || userData.email.split("@")[0]}</h4>
                         <p className="text-muted-foreground">{userData.email}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge className="bg-[hsla(var(--dashboard-primary),0.2)] text-[hsl(var(--dashboard-primary))]">
-                            Level {level}
-                          </Badge>
-                          <Badge className="bg-[hsla(var(--dashboard-secondary),0.2)] text-[hsl(var(--dashboard-secondary))]">
-                            {userData.xp} XP
-                          </Badge>
+                          <Badge className="bg-green-600 text-white">Level {level}</Badge>
+                          <Badge className="bg-green-600 text-white">{userData.xp} XP</Badge>
                         </div>
                       </div>
                     </div>
@@ -1462,7 +1393,7 @@ export default function UserDashboardPage() {
                     <div className="pt-2">
                       <Button
                         variant="outline"
-                        className="w-full border-[hsla(var(--dashboard-border),0.5)] hover:bg-[hsla(var(--dashboard-primary),0.1)]"
+                        className="w-full border-gray-300 hover:bg-gray-100 text-black"
                         onClick={() => router.push("/settings")}
                       >
                         <Settings className="mr-2 h-4 w-4" />
@@ -1472,15 +1403,13 @@ export default function UserDashboardPage() {
                   </div>
                 </div>
 
-                <div className="gradient-card p-4 rounded-lg">
-                  <h3 className="text-lg font-bold gradient-heading mb-4">Learning Journey</h3>
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-black mb-4">Learning Journey</h3>
                   <div className="space-y-4">
                     <div className="border border-[hsla(var(--dashboard-border),0.5)] rounded-lg p-3">
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="text-sm font-medium">Progress Overview</h4>
-                        <Badge className="bg-[hsla(var(--dashboard-accent),0.2)] text-[hsl(var(--dashboard-accent))]">
-                          {activities.length} Activities
-                        </Badge>
+                        <Badge className="bg-green-600 text-white">{activities.length} Activities</Badge>
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs">
@@ -1536,7 +1465,7 @@ export default function UserDashboardPage() {
 
                     <div className="pt-2">
                       <Button
-                        className="w-full bg-[hsl(var(--dashboard-primary))] hover:bg-[hsla(var(--dashboard-primary),0.8)]"
+                        className="bg-black text-white hover:bg-gray-800 w-full"
                         onClick={() => router.push("/dashboard/learning-path")}
                       >
                         <Zap className="mr-2 h-4 w-4" />

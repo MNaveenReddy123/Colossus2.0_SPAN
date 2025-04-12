@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import { IndianRupee } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
-import { saveActivityProgress } from "@/actions/user-actions";
-import { toast } from "@/components/ui/use-toast";
+import { useEffect, useState } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion"
+import { IndianRupee } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { saveActivityProgress } from "@/actions/user-actions"
+import { toast } from "@/components/ui/use-toast"
 
 const terms = [
   {
@@ -16,8 +16,7 @@ const terms = [
   },
   {
     term: "Inflation",
-    definition:
-      "General increase in prices and fall in purchasing value of money.",
+    definition: "General increase in prices and fall in purchasing value of money.",
   },
   {
     term: "Diversification",
@@ -75,8 +74,7 @@ const terms = [
   },
   {
     term: "Risk Tolerance",
-    definition:
-      "Degree of variability in investment returns an investor can withstand.",
+    definition: "Degree of variability in investment returns an investor can withstand.",
   },
   {
     term: "Bull Market",
@@ -89,13 +87,11 @@ const terms = [
   { term: "Index Fund", definition: "Fund tracking a specific market index." },
   {
     term: "ETF (Exchange-Traded Fund)",
-    definition:
-      "Marketable security tracking an index, commodity, or basket of assets.",
+    definition: "Marketable security tracking an index, commodity, or basket of assets.",
   },
   {
     term: "Hedge Fund",
-    definition:
-      "Investment fund using advanced strategies to maximize returns.",
+    definition: "Investment fund using advanced strategies to maximize returns.",
   },
   {
     term: "Broker",
@@ -318,125 +314,119 @@ const terms = [
     definition: "Yearly cost of borrowing, including fees.",
   },
   { term: "Overdraft", definition: "Withdrawal exceeding account balance." },
-];
+]
 
 function shuffleArray<T>(array: T[]): T[] {
   return array
     .map((value) => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
+    .map(({ value }) => value)
 }
 
 const MemoryGamePage = () => {
-  const [cards, setCards] = useState<
-    { id: number; content: string; matched: boolean }[]
-  >([]);
-  const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
-  const [matchedPairs, setMatchedPairs] = useState<number[][]>([]);
-  const [moves, setMoves] = useState(0);
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
-  const { userData, refreshUserData } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasSavedProgress, setHasSavedProgress] = useState(false);
+  const [cards, setCards] = useState<{ id: number; content: string; matched: boolean }[]>([])
+  const [flippedIndices, setFlippedIndices] = useState<number[]>([])
+  const [matchedPairs, setMatchedPairs] = useState<number[][]>([])
+  const [moves, setMoves] = useState(0)
+  const [startTime, setStartTime] = useState<Date | null>(null)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const [gameOver, setGameOver] = useState(false)
+  const [gameStarted, setGameStarted] = useState(false)
+  const { userData, refreshUserData } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hasSavedProgress, setHasSavedProgress] = useState(false)
 
   const startGame = () => {
-    const selected = shuffleArray(terms).slice(0, 6);
+    const selected = shuffleArray(terms).slice(0, 6)
     const pairs = shuffleArray(
       selected.flatMap((item) => [
         { content: item.term, id: Math.random(), matched: false },
         { content: item.definition, id: Math.random(), matched: false },
-      ])
-    );
-    setCards(pairs);
-    setStartTime(new Date());
-    setGameOver(false);
-    setMoves(0);
-    setMatchedPairs([]);
-    setFlippedIndices([]);
-    setElapsedTime(0);
-    setGameStarted(true);
-    setHasSavedProgress(false);
-  };
+      ]),
+    )
+    setCards(pairs)
+    setStartTime(new Date())
+    setGameOver(false)
+    setMoves(0)
+    setMatchedPairs([])
+    setFlippedIndices([])
+    setElapsedTime(0)
+    setGameStarted(true)
+    setHasSavedProgress(false)
+  }
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: NodeJS.Timeout
     if (gameStarted && !gameOver && startTime) {
       timer = setInterval(() => {
-        setElapsedTime(
-          Math.floor((new Date().getTime() - startTime.getTime()) / 1000)
-        );
-      }, 1000);
+        setElapsedTime(Math.floor((new Date().getTime() - startTime.getTime()) / 1000))
+      }, 1000)
     }
-    return () => clearInterval(timer);
-  }, [startTime, gameOver, gameStarted]);
+    return () => clearInterval(timer)
+  }, [startTime, gameOver, gameStarted])
 
   const handleCardClick = (index: number) => {
-    if (flippedIndices.includes(index) || cards[index].matched) return;
+    if (flippedIndices.includes(index) || cards[index].matched) return
     if (flippedIndices.length === 0) {
-      setFlippedIndices([index]);
+      setFlippedIndices([index])
     } else if (flippedIndices.length === 1) {
-      const firstIndex = flippedIndices[0];
-      const secondIndex = index;
-      setFlippedIndices([firstIndex, secondIndex]);
-      setMoves((prev) => prev + 1);
+      const firstIndex = flippedIndices[0]
+      const secondIndex = index
+      setFlippedIndices([firstIndex, secondIndex])
+      setMoves((prev) => prev + 1)
 
-      const firstCard = cards[firstIndex];
-      const secondCard = cards[secondIndex];
+      const firstCard = cards[firstIndex]
+      const secondCard = cards[secondIndex]
 
       const match = terms.some(
         (term) =>
-          (term.term === firstCard.content &&
-            term.definition === secondCard.content) ||
-          (term.definition === firstCard.content &&
-            term.term === secondCard.content)
-      );
+          (term.term === firstCard.content && term.definition === secondCard.content) ||
+          (term.definition === firstCard.content && term.term === secondCard.content),
+      )
 
       if (match) {
         const newCards = cards.map((card, i) => {
           if (i === firstIndex || i === secondIndex) {
-            return { ...card, matched: true };
+            return { ...card, matched: true }
           }
-          return card;
-        });
-        setCards(newCards);
-        setMatchedPairs((prev) => [...prev, [firstIndex, secondIndex]]);
-        setFlippedIndices([]);
+          return card
+        })
+        setCards(newCards)
+        setMatchedPairs((prev) => [...prev, [firstIndex, secondIndex]])
+        setFlippedIndices([])
       } else {
         setTimeout(() => {
-          setFlippedIndices([]);
-        }, 1000);
+          setFlippedIndices([])
+        }, 1000)
       }
     }
-  };
+  }
 
   useEffect(() => {
     if (matchedPairs.length === cards.length / 2 && cards.length > 0 && !gameOver) {
-      setGameOver(true);
+      setGameOver(true)
       if (!hasSavedProgress) {
-        handleGameEnd();
+        handleGameEnd()
       }
     }
-  }, [matchedPairs, cards, gameOver, hasSavedProgress]);
+  }, [matchedPairs, cards, gameOver, hasSavedProgress])
 
   const handleGameEnd = async () => {
-    if (!userData || isSubmitting || hasSavedProgress) return;
+    if (!userData || isSubmitting || hasSavedProgress) return
 
-    const XP = Math.max(100 - ((moves - 12) * 5 + elapsedTime / 2), 10);
-    const coinsEarned = Math.floor(XP * 1.5);
+    const XP = Math.max(100 - ((moves - 12) * 5 + elapsedTime / 2), 10)
+    const coinsEarned = Math.floor(XP * 1.5)
 
     try {
-      setIsSubmitting(true);
+      setIsSubmitting(true)
       console.log("Saving game progress...", {
         userId: userData.id,
         activityType: "game",
         activityName: "Finance Memory Match",
         score: matchedPairs.length,
         xpEarned: XP,
-        coinsEarned: coinsEarned
-      });
+        coinsEarned: coinsEarned,
+      })
 
       const result = await saveActivityProgress(
         userData.id,
@@ -444,43 +434,39 @@ const MemoryGamePage = () => {
         "Finance Memory Match",
         matchedPairs.length,
         XP,
-        coinsEarned
-      );
+        coinsEarned,
+      )
 
       if (result.success) {
-        console.log("Progress saved successfully");
-        await refreshUserData();
-        setHasSavedProgress(true);
+        console.log("Progress saved successfully")
+        await refreshUserData()
+        setHasSavedProgress(true)
         toast({
           title: "Game Complete!",
           description: `You earned ${XP} XP and ${coinsEarned} Coins!`,
           className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
-        });
+        })
       } else {
-        throw new Error("Failed to save progress");
+        throw new Error("Failed to save progress")
       }
     } catch (error) {
-      console.error("Error saving game progress:", error);
+      console.error("Error saving game progress:", error)
       toast({
         title: "Error",
         description: "Failed to save progress. Please try again.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   if (!gameStarted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-200 to-pink-200">
         <div className="bg-white p-10 rounded-3xl shadow-2xl text-center">
-          <h1 className="text-5xl font-bold mb-6 text-purple-700">
-            🧠 Finance Memory Game
-          </h1>
-          <p className="text-xl mb-6 text-gray-600">
-            Match finance terms with their definitions!
-          </p>
+          <h1 className="text-5xl font-bold mb-6 text-purple-700">🧠 Finance Memory Game</h1>
+          <p className="text-xl mb-6 text-gray-600">Match finance terms with their definitions!</p>
           <Button
             onClick={startGame}
             className="bg-purple-600 hover:bg-purple-700 text-white text-lg px-8 py-3 rounded-full shadow-lg"
@@ -489,22 +475,18 @@ const MemoryGamePage = () => {
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   if (gameOver) {
-    const XP = Math.max(100 - ((moves - 12) * 5 + elapsedTime / 2), 10);
-    const coins_earned = Math.floor(XP * 1.5);
+    const XP = Math.max(100 - ((moves - 12) * 5 + elapsedTime / 2), 10)
+    const coins_earned = Math.floor(XP * 1.5)
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-100 to-pink-200">
         <div className="bg-white p-10 rounded-3xl shadow-2xl text-center">
-          <h1 className="text-5xl font-extrabold mb-6 text-purple-700">
-            🎉 You Won!
-          </h1>
-          <p className="text-2xl mb-2 text-gray-700">
-            🕒 Time: {elapsedTime} seconds
-          </p>
+          <h1 className="text-5xl font-extrabold mb-6 text-purple-700">🎉 You Won!</h1>
+          <p className="text-2xl mb-2 text-gray-700">🕒 Time: {elapsedTime} seconds</p>
           <p className="text-2xl mb-6 text-gray-700">🎯 Moves: {moves}</p>
           <p className="text-2xl mb-6 text-gray-700"> You earned {XP}XP.</p>
           <p className="text-2xl mb-6 text-gray-700"> You earned {coins_earned}Coins.</p>
@@ -516,20 +498,18 @@ const MemoryGamePage = () => {
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-pink-100 flex flex-col items-center p-6">
-      <h1 className="text-4xl font-bold mb-4 text-gray-800">
-        💸 Finance Memory Match
-      </h1>
+      <h1 className="text-4xl font-bold mb-4 text-gray-800">💸 Finance Memory Match</h1>
       <div className="text-lg mb-4 text-gray-700">
         Moves: {moves} | Time: {elapsedTime}s
       </div>
       <div className="grid grid-cols-4 gap-4 max-w-5xl">
         {cards.map((card, index) => {
-          const isFlipped = flippedIndices.includes(index) || card.matched;
+          const isFlipped = flippedIndices.includes(index) || card.matched
           return (
             <motion.div
               key={card.id}
@@ -539,15 +519,11 @@ const MemoryGamePage = () => {
             >
               <Card className="w-full h-full cursor-pointer shadow-xl border-2 border-purple-300 rounded-2xl">
                 <CardContent className="flex items-center justify-center h-full text-center text-xl font-semibold text-gray-800">
-                  {isFlipped ? (
-                    card.content
-                  ) : (
-                    <IndianRupee size={40} className="text-purple-600" />
-                  )}
+                  {isFlipped ? card.content : <IndianRupee size={40} className="text-purple-600" />}
                 </CardContent>
               </Card>
             </motion.div>
-          );
+          )
         })}
       </div>
       <Button
@@ -557,7 +533,7 @@ const MemoryGamePage = () => {
         🔁 New Game
       </Button>
     </div>
-  );
-};
+  )
+}
 
-export default MemoryGamePage;
+export default MemoryGamePage
