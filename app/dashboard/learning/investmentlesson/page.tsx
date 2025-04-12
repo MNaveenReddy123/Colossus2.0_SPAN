@@ -78,6 +78,11 @@ export default function investmentlearning() {
         </p>
       </section>
 
+      <section className="mb-10">
+        {" "}
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/rAqzpRZa78E?si=caZbfeZt8g0dMocb" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/tHxwyWnNu0c?si=keDa0g4JhMoei5uh" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
       <div className="text-center mt-8">
         <Link href="/dashboard/quizzes/investment">
           <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-semibold transition">
