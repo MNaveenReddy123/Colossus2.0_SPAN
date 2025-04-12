@@ -1,20 +1,20 @@
-"use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Award } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { v4 as uuidv4 } from "uuid";
-import { useAuth } from "@/contexts/auth-context";
-import { saveActivityProgress } from "@/actions/user-actions";
-import { toast } from "@/components/ui/use-toast";
+"use client"
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, Award } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { v4 as uuidv4 } from "uuid"
+import { useAuth } from "@/contexts/auth-context"
+import { saveActivityProgress } from "@/actions/user-actions"
+import { toast } from "@/components/ui/use-toast"
 
 // Type Definitions
-type TaxItem = { id: string; label: string; category: "Income" | "Deduction" | "Invalid" };
-type DropZoneCategory = "Income" | "Deduction" | "Invalid";
+type TaxItem = { id: string; label: string; category: "Income" | "Deduction" | "Invalid" }
+type DropZoneCategory = "Income" | "Deduction" | "Invalid"
 
 // Sample Tax Items
 const taxItems: TaxItem[] = [
@@ -27,105 +27,98 @@ const taxItems: TaxItem[] = [
   { id: uuidv4(), label: "Birthday Card", category: "Invalid" },
   { id: uuidv4(), label: "Student Loan Interest", category: "Deduction" },
   { id: uuidv4(), label: "Dividend Statement", category: "Income" },
-];
+]
 
 export default function TaxRushGame() {
-  const router = useRouter();
-  const { userData, refreshUserData } = useAuth();
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60); // 10 minutes
-  const [currentItems, setCurrentItems] = useState<TaxItem[]>(taxItems);
-  const [gameStatus, setGameStatus] = useState<"not_started" | "in_progress" | "completed">("not_started");
-  const [draggedItem, setDraggedItem] = useState<TaxItem | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter()
+  const { userData, refreshUserData } = useAuth()
+  const [score, setScore] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(60) // 10 minutes
+  const [currentItems, setCurrentItems] = useState<TaxItem[]>(taxItems)
+  const [gameStatus, setGameStatus] = useState<"not_started" | "in_progress" | "completed">("not_started")
+  const [draggedItem, setDraggedItem] = useState<TaxItem | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Timer Effect
   useEffect(() => {
-    if (gameStatus !== "in_progress") return;
+    if (gameStatus !== "in_progress") return
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
-          setGameStatus("completed");
-          handleGameEnd();
-          return 0;
+          clearInterval(timer)
+          setGameStatus("completed")
+          handleGameEnd()
+          return 0
         }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [gameStatus]);
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [gameStatus])
 
   // Drag and Drop Handlers
-  const handleDragStart = (item: TaxItem) => setDraggedItem(item);
+  const handleDragStart = (item: TaxItem) => setDraggedItem(item)
 
   const handleDrop = async (zone: DropZoneCategory) => {
-    if (!draggedItem) return;
+    if (!draggedItem) return
 
-    setCurrentItems((prev) => prev.filter((i) => i.id !== draggedItem.id));
+    setCurrentItems((prev) => prev.filter((i) => i.id !== draggedItem.id))
     if (draggedItem.category === zone) {
-      setScore((prev) => prev + 10);
-      toast({ title: "Nice Move!", description: "+10 Points!", className: "bg-green-500 text-white" });
+      setScore((prev) => prev + 10)
+      toast({ title: "Nice Move!", description: "+10 Points!", className: "bg-green-500 text-white" })
     } else {
-      setTimeLeft((prev) => Math.max(prev - 10, 0));
-      toast({ title: "Oops!", description: "-10 Seconds!", variant: "destructive" });
+      setTimeLeft((prev) => Math.max(prev - 10, 0))
+      toast({ title: "Oops!", description: "-10 Seconds!", variant: "destructive" })
     }
-    setDraggedItem(null);
+    setDraggedItem(null)
 
     if (currentItems.length === 1) {
-      setGameStatus("completed");
-      handleGameEnd();
+      setGameStatus("completed")
+      handleGameEnd()
     }
-  };
+  }
 
   // Time Formatting
   const formatTime = (seconds: number) => {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `${min}:${sec < 10 ? "0" : ""}${sec}`;
-  };
+    const min = Math.floor(seconds / 60)
+    const sec = seconds % 60
+    return `${min}:${sec < 10 ? "0" : ""}${sec}`
+  }
 
   // Calculate Rewards
   const calculateRewards = () => {
-    const xpEarned = Math.floor(score / 10) * 5; // 5 XP per correct answer
-    const coinsEarned = Math.floor(score / 10) * 3; // 3 coins per correct answer
-    return { xpEarned, coinsEarned };
-  };
+    const xpEarned = Math.floor(score / 10) * 5 // 5 XP per correct answer
+    const coinsEarned = Math.floor(score / 10) * 3 // 3 coins per correct answer
+    return { xpEarned, coinsEarned }
+  }
 
   // Handle Game End
   const handleGameEnd = async () => {
-    if (!userData || isSubmitting) return;
+    if (!userData || isSubmitting) return
 
-    const { xpEarned, coinsEarned } = calculateRewards();
+    const { xpEarned, coinsEarned } = calculateRewards()
     try {
-      setIsSubmitting(true);
-      const result = await saveActivityProgress(
-        userData.id,
-        "game",
-        "Tax Rush",
-        score,
-        xpEarned,
-        coinsEarned
-      );
+      setIsSubmitting(true)
+      const result = await saveActivityProgress(userData.id, "game", "Tax Rush", score, xpEarned, coinsEarned)
       if (result.success) {
-        await refreshUserData();
+        await refreshUserData()
         toast({
           title: "Tax Rush Mastered!",
           description: `You earned ${xpEarned} XP and ${coinsEarned} Coins!`,
           className: "bg-gradient-to-r from-purple-500 to-blue-500 text-white",
-        });
+        })
       }
     } catch (error) {
-      console.error("Error saving game progress:", error);
+      console.error("Error saving game progress:", error)
       toast({
         title: "Error",
         description: "Failed to save progress.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-500 to-teal-400 flex flex-col items-center p-6">
@@ -136,7 +129,7 @@ export default function TaxRushGame() {
         className="flex items-center justify-between w-full max-w-4xl mb-6"
       >
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/games">
+          <Link href="/dashboard/games/app">
             <Button variant="outline" size="icon" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -163,7 +156,7 @@ export default function TaxRushGame() {
           >
             <motion.span
               animate={{ scale: timeLeft < 30 ? [1, 1.1, 1] : 1 }}
-              transition={{ repeat: timeLeft < 30 ? Infinity : 0, duration: 0.5 }}
+              transition={{ repeat: timeLeft < 30 ? Number.POSITIVE_INFINITY : 0, duration: 0.5 }}
               className="flex items-center gap-2"
             >
               ⏳ {formatTime(timeLeft)}
@@ -183,8 +176,8 @@ export default function TaxRushGame() {
               <h3 className="text-2xl font-bold text-white">How to Play</h3>
               <p className="text-teal-100">
                 Drag tax items to <span className="text-yellow-300">Income</span>,{" "}
-                <span className="text-green-300">Deduction</span>, or{" "}
-                <span className="text-red-300">Invalid</span>. Correct moves earn 10 points, mistakes cost 10 seconds!
+                <span className="text-green-300">Deduction</span>, or <span className="text-red-300">Invalid</span>.
+                Correct moves earn 10 points, mistakes cost 10 seconds!
               </p>
               <Button
                 onClick={() => setGameStatus("in_progress")}
@@ -223,12 +216,13 @@ export default function TaxRushGame() {
                     key={zone}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(zone)}
-                    className={`p-6 rounded-xl border-2 border-dashed text-center text-white font-medium ${zone === "Income"
+                    className={`p-6 rounded-xl border-2 border-dashed text-center text-white font-medium ${
+                      zone === "Income"
                         ? "border-yellow-300 bg-yellow-500/20"
                         : zone === "Deduction"
                           ? "border-green-300 bg-green-500/20"
                           : "border-red-300 bg-red-500/20"
-                      }`}
+                    }`}
                     whileHover={{ scale: 1.02, borderColor: "#fff" }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
@@ -251,7 +245,7 @@ export default function TaxRushGame() {
                 <motion.div
                   className="rounded-full bg-teal-500/30 p-6 inline-block"
                   animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
                 >
                   <Award className="h-16 w-16 text-white" />
                 </motion.div>
@@ -271,7 +265,9 @@ export default function TaxRushGame() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.7 }}
                   >
-                    <p>You earned {calculateRewards().xpEarned} XP & {calculateRewards().coinsEarned} Coins!</p>
+                    <p>
+                      You earned {calculateRewards().xpEarned} XP & {calculateRewards().coinsEarned} Coins!
+                    </p>
                   </motion.div>
                 )}
               </motion.div>
@@ -281,7 +277,7 @@ export default function TaxRushGame() {
         <CardFooter className="flex justify-between">
           <Button
             variant="outline"
-            onClick={() => router.push("/dashboard/games")}
+            onClick={() => router.push("/dashboard/games/app")}
             className="bg-white/20 text-white border-white/30 hover:bg-white/30"
           >
             Back to Games
@@ -289,10 +285,10 @@ export default function TaxRushGame() {
           {gameStatus === "completed" && (
             <Button
               onClick={() => {
-                setScore(0);
-                setTimeLeft(600);
-                setCurrentItems(taxItems);
-                setGameStatus("not_started");
+                setScore(0)
+                setTimeLeft(600)
+                setCurrentItems(taxItems)
+                setGameStatus("not_started")
               }}
               disabled={isSubmitting}
               className="bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-full shadow-lg hover:from-purple-600 hover:to-blue-600"
@@ -316,5 +312,5 @@ export default function TaxRushGame() {
         </motion.div>
       )}
     </div>
-  );
+  )
 }
